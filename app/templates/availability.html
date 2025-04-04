@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block content %}
+	<h1>Edit Availability</h1>
+    <div class="container">
+    <form method="post" action="{{ url_for('availability') }}" novalidate>
+    {{ form.hidden_tag() }}
+    <table class="table">
+        <thead>
+        <tr>
+            <td> </td>
+            {% for day_code,day_name in form.days %}
+            	<td>{{ day_name }}</td>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for time_code, time_name in form.time_slots %}
+            <tr>
+            <td>{{ time_name }}</td>
+            {% for day_code, day_name in form.days %}
+                <td>
+            	{{ wtf.form_field(form[day_code + '_' + time_code]) }}
+                </td>
+            {% endfor %}
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+    {{ wtf.form_field(form.submit) }}
+    </form>
+    </div>
+
+{% endblock %}
