@@ -6,6 +6,7 @@ from wtforms.fields.simple import TextAreaField
 from wtforms.validators import DataRequired, EqualTo, NumberRange, ValidationError, Email, Optional, Length
 from app import db
 from app.models import User
+from app.static.dt_lists import days, time_slots
 import datetime
 
 
@@ -19,29 +20,8 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class AvailabilityForm(FlaskForm):
-    time_slots = [
-        ('0900', '09:00 AM'),
-        ('1000', '10:00 AM'),
-        ('1100', '11:00 AM'),
-        ('1200', '12:00 PM'),
-        ('1300', '1:00 PM'),
-        ('1400', '2:00 PM'),
-        ('1500', '3:00 PM'),
-        ('1600', '4:00 PM'),
-        ('1700', '5:00 PM'),
-        ('1800', '6:00 PM')
-    ]
-
-    days = [
-        ('monday', 'Monday'),
-        ('tuesday', 'Tuesday'),
-        ('wednesday', 'Wednesday'),
-        ('thursday', 'Thursday'),
-        ('friday', 'Friday'),
-        ('saturday', 'Saturday'),
-        ('sunday', 'Sunday')
-    ]
-
+    days = days
+    time_slots = time_slots
     for day_code, day_name in days:
         for time_code, time_name in time_slots:
             field_name = f'{day_code}_{time_code}'

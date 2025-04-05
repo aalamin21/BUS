@@ -5,6 +5,7 @@ from app.forms import ChooseForm, LoginForm, AvailabilityForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
+from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
 import csv
 import io
@@ -19,8 +20,6 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-    days = AvailabilityForm.days
-    time_slots = AvailabilityForm.time_slots
     return render_template('account.html', title="Account", days=days, time_slots=time_slots)
 
 
@@ -53,8 +52,6 @@ def availability():
     form = AvailabilityForm()
     if form.validate_on_submit():
         availability = {}
-        days = form.days
-        time_slots = form.time_slots
         for day_code, day_name in days:
             availability[day_code] = {}
             for time_code, time_name in time_slots:
