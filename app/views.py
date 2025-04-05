@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory
 from app import app
 from app.models import User
-from app.forms import ChooseForm, LoginForm, AvailabilityForm
+from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
@@ -30,10 +30,10 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(
-            sa.select(User).where(User.username == form.username.data))
-        if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password', 'danger')
-            return redirect(url_for('login'))
+            sa.select(User).where(User.email == form.email.data))
+        #if user is None or not user.check_password(form.password.data):
+         #   flash('Invalid username or password', 'danger')
+          #  return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':
@@ -45,6 +45,21 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        new_user = User(first_name=form.first_name.data, last_name=form.last_name.data,
+                        email =form.email.data, faculty =form.faculty.data,
+                        course_name=form.course_name.data, year_of_study=form.year_of_study.data)
+        new_user.set_password(form.password.data)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('generic_form.html', title='Register', form=form)
 
 @app.route('/availability', methods=['GET', 'POST'])
 @login_required
@@ -74,8 +89,6 @@ def availability():
 
     return render_template('availability.html',
                            title='Availability', form=form)
-
-
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

@@ -1,20 +1,42 @@
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, HiddenField, StringField, PasswordField, BooleanField, SelectField
-from wtforms.fields.numeric import IntegerField
+#from wtforms.fields.numeric import IntegerField
 from wtforms.fields.simple import TextAreaField
 from wtforms.validators import DataRequired, EqualTo, NumberRange, ValidationError, Email, Optional, Length
+from email_validator import EmailNotValidError, validate_email
 from app import db
 from app.models import User
 from app.static.dt_lists import days, time_slots
 import datetime
 
 
+
 class ChooseForm(FlaskForm):
     choice = HiddenField('Choice')
 
+#def email_validator(email, suffix):
+ #   try:
+  #      # Validate the email format using email_validator (optional but recommended)
+   #     emailinfo = email_validator(email)
+    #    email = emailinfo.email
+     #   return email.endswith(suffix)
+    #except EmailNotValidError:
+     #   return False
+
+class RegistrationForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    faculty = SelectField('Faculty', choices = [(1, "Life Sciences")], validators=[DataRequired()])
+    course_name = SelectField('Course Name', choices = [(1, "Medicine and Surgery MBChB")], validators=[DataRequired()])
+    year_of_study = SelectField('Course Start Year', choices = [(1, "First Year")], validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
+    submit = SubmitField('Register')
+
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
