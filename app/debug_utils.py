@@ -8,20 +8,28 @@ def reset_db():
     db.create_all()
 
     users =[
-        {'username': 'amy',   'email': 'amy@b.com', 'role': 'Admin', 'pw': 'amy.pw'},
-        {'username': 'tom',   'email': 'tom@b.com',                  'pw': 'amy.pw'},
-        {'username': 'yin',   'email': 'yin@b.com', 'role': 'Admin', 'pw': 'amy.pw'},
-        {'username': 'tariq', 'email': 'trq@b.com',                  'pw': 'amy.pw'},
-        {'username': 'jo',    'email': 'jo@b.com',                   'pw': 'amy.pw'}
-    ]
+        {'first_name': 'Amelia', 'last_name':'Carter', 'email': 'amelia.carter01@example.com',
+         'faculty': "Life Sciences", 'course_name':'Medicine and Surgery MBChB', 'year_of_study':'First Year',
+         'password':'A123'},
+        {'first_name': 'Daniel', 'last_name': 'Mensah', 'email': 'daniel.mensah@example.com',
+        'faculty': "Life Sciences", 'course_name': 'Medicine and Surgery MBChB', 'year_of_study': 'First Year',
+        'password': 'D123'},
+        {'first_name': 'Priya', 'last_name': 'Shah', 'email': 'priya.shah@example.com',
+         'faculty': "Life Sciences", 'course_name': 'Medicine and Surgery MBChB', 'year_of_study': 'First Year',
+         'password': 'P123'},
+        {'first_name': 'James', 'last_name': 'O’Connell', 'email': 'james.oconnell@example.com',
+         'faculty': "Life Sciences", 'course_name': 'Medicine and Surgery MBChB', 'year_of_study': 'First Year',
+         'password': 'J123'},
+        {'first_name': 'Thandi', 'last_name': 'Mokoena', 'email': 'thandi.mokoena@example.com',
+         'faculty': "Life Sciences", 'course_name': 'Medicine and Surgery MBChB', 'year_of_study': 'First Year',
+         'password': 'T123'}
+            ]
+
+
+
 
     for u in users:
-        # get the password value and remove it from the dict:
-        pw = u.pop('pw')
-        # create a new user object using the parameters defined by the remaining entries in the dict:
-        user = User(**u)
-        # set the password for the user object:
-        user.set_password(pw)
-        # add the newly created user object to the database session:
-        db.session.add(user)
+        u = User(**u)
+        db.session.add(u)
+
     db.session.commit()
