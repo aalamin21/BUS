@@ -48,6 +48,6 @@ class AvailabilityForm(FlaskForm):
         for time_code, time_name in time_slots:
             field_name = f'{day_code}_{time_code}'
             field_label = f'{day_name} {time_name}'
-            locals()[field_name] = BooleanField(field_label)
+            locals()[field_name] = BooleanField('')
 
     submit = SubmitField('Save Availability')
