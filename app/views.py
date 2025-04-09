@@ -7,13 +7,14 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
-import csv
-import io
-import datetime
+
 
 
 @app.route("/")
 def home():
+    if not current_user.is_authenticated:
+        flash('Please login or register to continue', 'danger')
+        return redirect(url_for('login'))
     return render_template('home.html', title="Home")
 
 
@@ -57,8 +58,14 @@ def register():
                         course_name=form.course_name.data, year_of_study=form.year_of_study.data)
         new_user.set_password(form.password.data)
         db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('home'))
+        try:
+            db.session.commit()
+        except sa.exc.IntegrityError:
+            flash('Email already exists', 'danger')
+            return redirect(url_for('register'))
+        login_user(new_user)
+        flash('Account created successfully', 'success')
+        return redirect(url_for('availability'))
     return render_template('generic_form.html', title='Register', form=form)
 
 @app.route('/availability', methods=['GET', 'POST'])
