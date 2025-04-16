@@ -28,9 +28,9 @@ class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    faculty = SelectField('Faculty', choices = [(1, "Life Sciences")], validators=[DataRequired()])
-    course_name = SelectField('Course Name', choices = [(1, "Medicine and Surgery MBChB")], validators=[DataRequired()])
-    year_of_study = SelectField('Course Start Year', choices = [(1, "First Year")], validators=[DataRequired()])
+    faculty = SelectField('Faculty', choices = [("Life Sciences", "Life Sciences")], validators=[DataRequired()])
+    course_name = SelectField('Course Name', choices = [("Medicine and Surgery MBChB", "Medicine and Surgery MBChB")], validators=[DataRequired()])
+    year_of_study = SelectField('Course Start Year', choices = [("First Year", "First Year")], validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
     submit = SubmitField('Register')
@@ -48,6 +48,6 @@ class AvailabilityForm(FlaskForm):
         for time_code, time_name in time_slots:
             field_name = f'{day_code}_{time_code}'
             field_label = f'{day_name} {time_name}'
-            locals()[field_name] = BooleanField(field_label)
+            locals()[field_name] = BooleanField('')
 
     submit = SubmitField('Save Availability')

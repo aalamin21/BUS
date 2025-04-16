@@ -14,7 +14,7 @@
 
 <table class="table">
 <thead>
-<tr>
+<tr class="table-dark">
 <td> </td>
 {% for day_code,day_name in days %}
 	<td>{{ day_name }}</td>
@@ -24,7 +24,7 @@
 <tbody>
 {% for time_code, time_name in time_slots %}
     <tr>
-    <td>
+    <td class="table-dark">
         {{ time_name }}
     </td>
     {% for day_code, day_name in days %}
