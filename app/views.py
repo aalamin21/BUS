@@ -58,8 +58,8 @@ def register():
         new_user.set_password(form.password.data)
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for('home'))
-    return render_template('generic_form.html', title='Register', form=form)
+        return redirect(url_for('availability'))
+    return render_template('register.html', title='Register', form=form)
 
 @app.route('/availability', methods=['GET', 'POST'])
 @login_required

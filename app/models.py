@@ -46,11 +46,6 @@ class User(UserMixin, db.Model):
         return (f'User(id={self.id}, first_name={self.first_name},last_name={self.last_name}, email={self.email}, faculty={self.faculty},'
                 f'course_name={self.course_name}, year_of_study={self.year_of_study}, pwh={pwh})')
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
 
 @login.user_loader
 def load_user(id):
