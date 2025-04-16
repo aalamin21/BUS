@@ -24,8 +24,8 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    first_name: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
-    last_name: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
+    first_name: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=False)
+    last_name: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=False)
     email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique=True)
     faculty: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
     course_name: so.Mapped[str] = so.mapped_column(sa.String(64))
