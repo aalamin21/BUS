@@ -11,12 +11,13 @@ from urllib.parse import urlsplit
 
 
 @app.route("/")
-def home():
-    if not current_user.is_authenticated:
-        flash('Please login or register to continue', 'danger')
-        return redirect(url_for('login'))
-    return render_template('home.html', title="Home")
+def start():
+    return render_template('startpage.html', title="Start")
 
+@app.route("/home")
+@login_required
+def home():
+    return render_template('home.html', title="Home")
 
 @app.route("/account")
 @login_required
@@ -26,8 +27,8 @@ def account():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+    #if current_user.is_authenticated:
+       # return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(
@@ -45,12 +46,12 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('home'))
+    return redirect(url_for('start'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+    #if current_user.is_authenticated:
+     #   return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         new_user = User(first_name=form.first_name.data, last_name=form.last_name.data,
@@ -66,7 +67,7 @@ def register():
         login_user(new_user)
         flash('Account created successfully', 'success')
         return redirect(url_for('availability'))
-    return render_template('generic_form.html', title='Register', form=form)
+    return render_template('register.html', title='Register', form=form)
 
 @app.route('/availability', methods=['GET', 'POST'])
 @login_required

@@ -15,22 +15,13 @@ import datetime
 class ChooseForm(FlaskForm):
     choice = HiddenField('Choice')
 
-#def email_validator(email, suffix):
- #   try:
-  #      # Validate the email format using email_validator (optional but recommended)
-   #     emailinfo = email_validator(email)
-    #    email = emailinfo.email
-     #   return email.endswith(suffix)
-    #except EmailNotValidError:
-     #   return False
-
 class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     faculty = SelectField('Faculty', choices = [("Life Sciences", "Life Sciences")], validators=[DataRequired()])
     course_name = SelectField('Course Name', choices = [("Medicine and Surgery MBChB", "Medicine and Surgery MBChB")], validators=[DataRequired()])
-    year_of_study = SelectField('Course Start Year', choices = [("First Year", "First Year")], validators=[DataRequired()])
+    year_of_study = SelectField('Course Year', choices = [("First Year", "First Year")], validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
     submit = SubmitField('Register')
