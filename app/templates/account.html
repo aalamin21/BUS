@@ -2,13 +2,9 @@
 {% import "bootstrap_wtf.html" as wtf %}
 
 {% block content %}
-<h1>Private Account Page</h1>
-
-<p>Hello {{ current_user.first_name }}</p>
-
-<p>This page is only available to you as the currently logged in user</p>
-
+<h1>Your Profile and Preferences</h1>
 <p>The email address we have recorded for you is: {{ current_user.email }}</p>
+<p>You are currently studying: {{ current_user.course_name }}</p>
 
 <h2>Current Availability</h2>
 
@@ -46,4 +42,7 @@
 <div class="container">
     <a class="btn btn-primary" href="{{ url_for('availability') }}" role="button">Edit Availability</a>
 </div>
+
+<h2>Your Module Preferences</h2>
+
 {% endblock %}

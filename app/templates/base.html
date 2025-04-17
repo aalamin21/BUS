@@ -40,7 +40,7 @@
                     <a class="nav-link" aria-current="page" href="{{ url_for('logout') }}">Logout {{ current_user.first_name }}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="{{ url_for('account') }}">Account</a>
+                    <a class="nav-link" aria-current="page" href="{{ url_for('account') }}">Edit Preferences</a>
                 </li>
                 {% endif %}
             </ul>
@@ -48,7 +48,7 @@
     </div>
 </nav>
 
-<body style="background-color:darkseagreen;"</body>
+<body style="background-color:whitesmoke;"</body>
 
 <div class="container mt-3">
     {% with messages = get_flashed_messages(with_categories=true) %}
