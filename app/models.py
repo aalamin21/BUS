@@ -16,7 +16,7 @@ def default_av():
     for day_code, day_name in days:
         av[day_code] = {}
         for time_code, time_name in time_slots:
-            av[day_code][time_code] = False
+            av[day_code][time_code] = True
     return av
 
 @dataclass
@@ -31,8 +31,8 @@ class User(UserMixin, db.Model):
     course_name: so.Mapped[str] = so.mapped_column(sa.String(64))
     year_of_study: so.Mapped[int] = so.mapped_column(sa.Integer)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
-    #role: so.Mapped[str] = so.mapped_column(sa.String(10), default="Normal")
     availability: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
+    groups: so.Mapped[list['Membership']] = relationship('Membership', back_populates='user')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -54,3 +54,24 @@ class User(UserMixin, db.Model):
 @login.user_loader
 def load_user(id):
     return db.session.get(User, int(id))
+
+class Group(db.Model):
+    __tablename__ = 'groups'
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    members: so.Mapped[list['Membership']] = relationship('Membership', back_populates='group')
+    group_av: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
+
+    def __repr__(self):
+        return f'Group(id={self.id}), Members: {self.members}'
+
+class Membership(db.Model):
+    __tablename__ = 'memberships'
+
+    user_id: so.Mapped[int] = so.mapped_column(ForeignKey('users.id'), primary_key=True)
+    group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), primary_key=True)
+    group: so.Mapped['Group'] = relationship('Group', back_populates='members')
+    user: so.Mapped['User'] = relationship('User', back_populates='groups')
+
+    def __repr__(self):
+        return f'Membership(user_id={self.user_id}, group_id={self.group_id})'
