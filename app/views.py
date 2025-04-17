@@ -98,6 +98,13 @@ def availability():
     return render_template('availability.html',
                            title='Availability', form=form)
 
+@app.route('/group_page')
+def group_page():
+    groups = []
+    for i in range(1, 11):
+        groups.append(f'Group {i}')
+    return render_template('groups.html', title='Groups', groups=groups)
+
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 
