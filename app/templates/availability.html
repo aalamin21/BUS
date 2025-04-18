@@ -3,26 +3,27 @@
 
 {% block content %}
 	<h1>Edit Availability</h1>
-    <div class="container">
+    <div class="table-responsive">
     <form method="post" action="{{ url_for('availability') }}" novalidate>
     {{ form.hidden_tag() }}
-    <table class="table">
+    <table class="table align-middle">
         <thead>
-        <tr>
-            <td> </td>
+        <tr class="d-flex table-dark">
+            <td class="col text-center"> </td>
             {% for day_code,day_name in form.days %}
-            	<td>{{ day_name }}</td>
+            	<td class="col text-center">{{ day_name }}</td>
             {% endfor %}
         </tr>
         </thead>
         <tbody>
 
         {% for time_code, time_name in form.time_slots %}
-            <tr>
-            <td>{{ time_name }}</td>
+            <tr class="d-flex">
+            <td class="col align-middle table-dark">{{ time_name }}</td>
             {% for day_code, day_name in form.days %}
-                <td>
-            	{{ wtf.form_field(form[day_code + '_' + time_code]) }}
+                <td class="col align-middle p-0">
+            	{{ form[day_code + '_' + time_code](class="btn-check position-absolute") }}
+                <label class="btn btn-outline-secondary" style="height: 100%; width: 100%; border-radius: 0;" for="{{ day_code }}_{{ time_code }}"> </label>
                 </td>
             {% endfor %}
             </tr>
