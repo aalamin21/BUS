@@ -5,3 +5,5 @@ app/__pycache__/*
 app/static/__pycache__/*
 
 app/data/data.sqlite
+
+.idea/material_theme_project_new.xml
