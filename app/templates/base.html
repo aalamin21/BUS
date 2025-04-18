@@ -11,6 +11,7 @@
             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
             crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"
 </head>
 
 <body>
@@ -39,16 +40,16 @@
                 <li class="nav-item">
                     <a class="nav-link" aria-current="page" href="{{ url_for('logout') }}">Logout {{ current_user.first_name }}</a>
                 </li>
-                {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="{{ url_for('account') }}">Account</a>
+                    <a class="nav-link" aria-current="page" href="{{ url_for('account') }}">Edit Preferences</a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </div>
 </nav>
 
-<body style="background-color:darkseagreen;"</body>
+<body style="background-color:whitesmoke;"</body>
 
 <div class="container mt-3">
     {% with messages = get_flashed_messages(with_categories=true) %}
