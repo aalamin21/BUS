@@ -2,6 +2,12 @@
 
 {% macro group_button(group) %}
     <button type="submit" class="btn btn-primary w-100 btn-square">
-        {{ group }}
+        {% if group == None %}
+            Add Group
+        {% else %}
+            Group {{ group.id }}
+{#            <i class="bi bi-people">{{ len(group.members) }}</i>#}
+        {% endif %}
     </button>
+
 {% endmacro %}

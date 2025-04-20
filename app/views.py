@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory
 from app import app
-from app.models import User
+from app.models import User, Group
 from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
@@ -98,12 +98,37 @@ def availability():
     return render_template('availability.html',
                            title='Availability', form=form)
 
-@app.route('/group_page')
-def group_page():
-    groups = []
-    for i in range(1, 11):
-        groups.append(f'Group {i}')
+@app.route('/groups_page')
+@login_required
+def groups_page():
+    groups = db.session.scalars(db.select(Group))
+    # print(groups[0].id)
+    # for group in groups:
+    #     print(group.id)
+    # print('~~~~~~~~HERE~~~~~~~~')
+
     return render_template('groups.html', title='Groups', groups=groups)
+
+@app.route('/group_page/<int:id>')
+@login_required
+def group_page_id(id):
+    group = db.session.scalar(sa.select(Group).where(Group.id == id))
+
+
+    if group is None:
+        flash('Group not found', 'danger')
+        return redirect(url_for('groups_page'))
+
+    return render_template('group_page.html', title=f'Group {id}', group=group)
+
+@app.route('/new_group')
+@login_required
+def new_group():
+    group = Group()
+    db.session.add(group)
+    db.session.commit()
+    return redirect(url_for('groups_page'))
+
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
