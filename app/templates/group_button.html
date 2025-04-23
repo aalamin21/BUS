@@ -5,8 +5,18 @@
         {% if group == None %}
             Add Group
         {% else %}
-            Group {{ group.id }}
-{#            <i class="bi bi-people">{{ len(group.members) }}</i>#}
+            <div class="container">
+                <div class="row justify-content-centre">
+                    <div class="col">
+                        Group {{ group.id }}
+                    </div>
+                </div>
+                <div class="row justify-content-centre">
+                    <div class="col">
+                        <i class="bi bi-people">  {{ group.members|length }}</i>
+                    </div>
+                </div>
+            </div>
         {% endif %}
     </button>
 
