@@ -7,3 +7,6 @@ app/static/__pycache__/
 app/data/data.sqlite
 
 .idea/
+
+app/.DS_Store
+app/templates/.DS_Store
