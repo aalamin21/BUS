@@ -7,15 +7,17 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
-import csv
-import io
-import datetime
+
 
 
 @app.route("/")
+def start():
+    return render_template('startpage.html', title="Start")
+
+@app.route("/home")
+@login_required
 def home():
     return render_template('home.html', title="Home")
-
 
 @app.route("/account")
 @login_required
@@ -25,8 +27,8 @@ def account():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+    #if current_user.is_authenticated:
+       # return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(
@@ -44,12 +46,12 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('home'))
+    return redirect(url_for('start'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
+    #if current_user.is_authenticated:
+     #   return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         new_user = User(first_name=form.first_name.data, last_name=form.last_name.data,
@@ -57,9 +59,15 @@ def register():
                         course_name=form.course_name.data, year_of_study=form.year_of_study.data)
         new_user.set_password(form.password.data)
         db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('home'))
-    return render_template('generic_form.html', title='Register', form=form)
+        try:
+            db.session.commit()
+        except sa.exc.IntegrityError:
+            flash('Email already exists', 'danger')
+            return redirect(url_for('register'))
+        login_user(new_user)
+        flash('Account created successfully', 'success')
+        return redirect(url_for('availability'))
+    return render_template('register.html', title='Register', form=form)
 
 @app.route('/availability', methods=['GET', 'POST'])
 @login_required
@@ -89,6 +97,13 @@ def availability():
 
     return render_template('availability.html',
                            title='Availability', form=form)
+
+@app.route('/group_page')
+def group_page():
+    groups = []
+    for i in range(1, 11):
+        groups.append(f'Group {i}')
+    return render_template('groups.html', title='Groups', groups=groups)
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

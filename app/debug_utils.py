@@ -1,7 +1,5 @@
 from app import db
 from app.models import User
-import datetime
-
 
 def reset_db():
     db.drop_all()
@@ -133,7 +131,9 @@ def reset_db():
 
 
     for u in users:
+        password = u.pop('password')
         u = User(**u)
+        u.set_password(password)
         db.session.add(u)
 
     db.session.commit()

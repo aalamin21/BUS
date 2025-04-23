@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Study Buddy, your study group organiser</h2>
-<p>New user? Register <a href="{{ url_for('register') }}">here</a></p>
-<p>Already have an account? Login <a href="{{ url_for('login') }}">here</a> </p>
+<h1 style="text-align: center; font-family: Arial, sans-serif;">Home</h1>
+<img src="{{ url_for('static', filename='studybuddylogo.png') }}"
+     alt="My image"
+     width="500"
+     style="border-radius: 10px; display: block; margin-left: auto; margin-right: auto;" />
 {% endblock %}
