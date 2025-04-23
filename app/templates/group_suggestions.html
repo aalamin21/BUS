@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Suggested Study Groups</h1>
+
+{% if suggestions %}
+    {% for group in suggestions %}
+        <div class="card my-3">
+            <div class="card-body">
+                <h5 class="card-title">Group {{ loop.index }}</h5>
+                <p><strong>Members:</strong> {{ group.group_members | join(', ') }}</p>
+
+                <p><strong>Shared Time Slots:</strong>
+                    {% if group.shared_slots %}
+                        {% for slot in group.shared_slots %}
+                            {% if not loop.first %}, {% endif %}{{ slot|slot_to_time }}
+                        {% endfor %}
+                    {% else %}
+                        None
+                    {% endif %}
+                </p>
+
+                <p><strong>Match Score:</strong> {{ group.match_score }}</p>
+
+                <form action="{{ url_for('join_group') }}" method="post">
+                    <input type="hidden" name="group_members" value="{{ group.group_members | join(',') }}">
+                    <button type="submit" class="btn btn-primary">Join This Group</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No matching groups found. Try updating your availability.</p>
+{% endif %}
+{% endblock %}
