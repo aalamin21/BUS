@@ -42,3 +42,4 @@ class AvailabilityForm(FlaskForm):
             locals()[field_name] = BooleanField('')
 
     submit = SubmitField('Save Availability')
+

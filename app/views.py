@@ -95,8 +95,24 @@ def availability():
                 field_name = f'{day_code}_{time_code}'
                 form.data[field_name] = user_availability[day_code][time_code]
 
+
+
     return render_template('availability.html',
-                           title='Availability', form=form)
+                           title='Preferences', form=form)
+
+@app.route('/modules', methods=['GET', 'POST'])
+@login_required
+def modules():
+    form = ModuleForm()
+    if form.validate_on_submit():
+        current_user.module1 = form.module1.data
+        current_user.module2 = form.module2.data
+        current_user.module3 = form.module3.data
+
+        db.session.commit()
+
+        flash('Module Choices saved successfully', 'success')
+        return redirect(url_for('account'))
 
 @app.route('/group_page')
 def group_page():
