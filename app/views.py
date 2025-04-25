@@ -7,7 +7,7 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
-
+from .utils import suggest_groups_for_user
 
 
 @app.route("/")
@@ -128,7 +128,20 @@ def new_group():
     db.session.add(group)
     db.session.commit()
     return redirect(url_for('groups_page'))
+@app.route("/suggest-groups")
+@login_required
+def suggest_groups():
+    suggestions = suggest_groups_for_user(current_user)
+    return render_template("group_suggestions.html", title='Suggested Groups', suggestions=suggestions)
 
+@app.route("/join-group", methods=["POST"])
+@login_required
+def join_group():
+    from flask import request, redirect, flash
+    group_members = request.form.get("group_members")
+    # TODO: Store group in DB. For now, just confirm it worked.
+    flash(f"You joined a group with: {group_members}", "success")
+    return redirect(url_for("suggest_groups"))
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
