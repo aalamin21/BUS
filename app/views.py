@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory
 from app import app
-from app.models import User
-from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm
+from app.models import User, Group
+from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
@@ -86,7 +86,7 @@ def availability():
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
-        return redirect(url_for('account'))
+        return redirect(url_for('modules'))
 
     user_availability = current_user.availability
     if user_availability:
@@ -98,12 +98,50 @@ def availability():
     return render_template('availability.html',
                            title='Availability', form=form)
 
-@app.route('/group_page')
-def group_page():
-    groups = []
-    for i in range(1, 11):
-        groups.append(f'Group {i}')
+@app.route('/modules', methods=['GET', 'POST'])
+@login_required
+def modules():
+    form = ModuleForm()
+    if form.validate_on_submit():
+        current_user.module1 = form.module1.data
+        current_user.module2 = form.module2.data
+        current_user.module3 = form.module3.data
+
+        db.session.commit()
+
+        flash('Module Choices saved successfully', 'success')
+        return redirect(url_for('account'))
+
+    return render_template('modules.html',
+                           title='Modules', form=form)
+
+@app.route('/groups_page')
+@login_required
+def groups_page():
+    groups = db.session.scalars(db.select(Group))
+    # print(groups[0].id)
+    # for group in groups:
+    #     print(group.id)
+    # print('~~~~~~~~HERE~~~~~~~~')
+
     return render_template('groups.html', title='Groups', groups=groups)
+
+@app.route("/suggest-groups")
+@login_required
+def suggest_groups():
+    suggestions = suggest_groups_for_user(current_user)
+    return render_template("group_suggestions.html", title='Suggested Groups', suggestions=suggestions)
+
+@app.route("/join-group", methods=["POST"])
+@login_required
+def join_group():
+    from flask import request, redirect, flash
+    group_members = request.form.get("group_members")
+    # TODO: Store group in DB. For now, just confirm it worked.
+    flash(f"You joined a group with: {group_members}", "success")
+    return redirect(url_for("suggest_groups"))
+
+
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

@@ -32,6 +32,9 @@ class User(UserMixin, db.Model):
     year_of_study: so.Mapped[int] = so.mapped_column(sa.Integer)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     availability: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
+    module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
+    module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
+    module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     groups: so.Mapped[list['Membership']] = relationship('Membership', back_populates='user')
 
     def set_password(self, password):

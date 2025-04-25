@@ -8,6 +8,7 @@ from email_validator import EmailNotValidError, validate_email
 from app import db
 from app.models import User
 from app.static.dt_lists import days, time_slots
+from app.static.module_list import modules
 import datetime
 
 
@@ -42,3 +43,21 @@ class AvailabilityForm(FlaskForm):
             locals()[field_name] = BooleanField('')
 
     submit = SubmitField('Save Availability')
+
+class ModuleForm(FlaskForm):
+    module1 = SelectField('Module 1', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)],
+                          validators=[DataRequired(message="Must select at least one module")])
+    module2 = SelectField('Module 2', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)])
+    module3 = SelectField('Module 3', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)])
+
+    submit = SubmitField('Save Module Selections')
+
+    @staticmethod
+    def validate_module2(self, field):
+        if int(field.data) != 0 and field.data == self.module1.data:
+            raise ValidationError('Cannot select the same module twice')
+
+    @staticmethod
+    def validate_module3(self, field):
+        if int(field.data) != 0 and field.data == self.module2.data or field.data == self.module1.data:
+            raise ValidationError('Cannot select the same module twice')
