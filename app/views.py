@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory
 from app import app
 from app.models import User, Group
-from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm
+from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
@@ -86,7 +86,7 @@ def availability():
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
-        return redirect(url_for('account'))
+        return redirect(url_for('modules'))
 
     user_availability = current_user.availability
     if user_availability:
@@ -96,7 +96,7 @@ def availability():
                 form.data[field_name] = user_availability[day_code][time_code]
 
     return render_template('availability.html',
-                           title='Preferences', form=form)
+                           title='Availability', form=form)
 
 @app.route('/modules', methods=['GET', 'POST'])
 @login_required
@@ -111,6 +111,9 @@ def modules():
 
         flash('Module Choices saved successfully', 'success')
         return redirect(url_for('account'))
+
+    return render_template('modules.html',
+                           title='Modules', form=form)
 
 @app.route('/groups_page')
 @login_required
