@@ -7,7 +7,7 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
-from .utils import suggest_groups_for_user
+
 
 
 @app.route("/")
@@ -95,8 +95,6 @@ def availability():
                 field_name = f'{day_code}_{time_code}'
                 form.data[field_name] = user_availability[day_code][time_code]
 
-
-
     return render_template('availability.html',
                            title='Preferences', form=form)
 
@@ -114,11 +112,15 @@ def modules():
         flash('Module Choices saved successfully', 'success')
         return redirect(url_for('account'))
 
-@app.route('/group_page')
-def group_page():
-    groups = []
-    for i in range(1, 11):
-        groups.append(f'Group {i}')
+@app.route('/groups_page')
+@login_required
+def groups_page():
+    groups = db.session.scalars(db.select(Group))
+    # print(groups[0].id)
+    # for group in groups:
+    #     print(group.id)
+    # print('~~~~~~~~HERE~~~~~~~~')
+
     return render_template('groups.html', title='Groups', groups=groups)
 
 @app.route("/suggest-groups")
