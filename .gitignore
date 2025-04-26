@@ -12,4 +12,5 @@ app/data/data.sqlite
 
 app/.DS_Store
 app/templates/.DS_Store
-
+app/static/.DS_Store
+.DS_Store
