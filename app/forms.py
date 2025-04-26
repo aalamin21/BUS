@@ -8,7 +8,7 @@ from email_validator import EmailNotValidError, validate_email
 from app import db
 from app.models import User
 from app.static.dt_lists import days, time_slots
-from app.static.module_list import modules
+from app.static.module_list import module_list
 import datetime
 
 
@@ -45,10 +45,10 @@ class AvailabilityForm(FlaskForm):
     submit = SubmitField('Save Availability')
 
 class ModuleForm(FlaskForm):
-    module1 = SelectField('Module 1', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)],
+    module1 = SelectField('Module 1', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)],
                           validators=[DataRequired(message="Must select at least one module")])
-    module2 = SelectField('Module 2', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)])
-    module3 = SelectField('Module 3', choices=[(-1," ")]+[(i, module) for i, module in enumerate(modules)])
+    module2 = SelectField('Module 2', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)])
+    module3 = SelectField('Module 3', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)])
 
     submit = SubmitField('Save Module Selections')
 

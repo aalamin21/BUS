@@ -6,6 +6,7 @@ from flask_login import current_user, login_user, logout_user, login_required, f
 import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
+from app.static.module_list import module_list
 from urllib.parse import urlsplit
 from app.utils import *
 
@@ -22,7 +23,8 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-    return render_template('account.html', title="Account", days=days, time_slots=time_slots)
+    return render_template('account.html', title="Account",
+                           days=days, time_slots=time_slots, module_list=module_list)
 
 
 @app.route('/login', methods=['GET', 'POST'])
