@@ -6,3 +6,8 @@
     padding: 0; /* Remove default padding */
     font-size: 200%;
 }
+
+.bg-custom-primary {
+    background-color: whitesmoke;
+    color: darkslategray;
+}

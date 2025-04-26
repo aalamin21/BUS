@@ -7,7 +7,7 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
-
+from app.utils import *
 
 
 @app.route("/")
@@ -27,15 +27,15 @@ def account():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    #if current_user.is_authenticated:
-       # return redirect(url_for('home'))
+    if current_user.is_authenticated:
+       return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(
             sa.select(User).where(User.email == form.email.data))
-        #if user is None or not user.check_password(form.password.data):
-         #   flash('Invalid username or password', 'danger')
-          #  return redirect(url_for('login'))
+        if user is None or not user.check_password(form.password.data):
+           flash('Invalid username or password', 'danger')
+           return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':
@@ -135,7 +135,6 @@ def suggest_groups():
 @app.route("/join-group", methods=["POST"])
 @login_required
 def join_group():
-    from flask import request, redirect, flash
     group_members = request.form.get("group_members")
     # TODO: Store group in DB. For now, just confirm it worked.
     flash(f"You joined a group with: {group_members}", "success")
