@@ -6,6 +6,7 @@ from flask_login import current_user, login_user, logout_user, login_required, f
 import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
+from app.static.module_list import module_list
 from urllib.parse import urlsplit
 from app.utils import suggest_groups_for_user
 
@@ -42,20 +43,21 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-    return render_template('account.html', title="Account", days=days, time_slots=time_slots)
+    return render_template('account.html', title="Account",
+                           days=days, time_slots=time_slots, module_list=module_list)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    #if current_user.is_authenticated:
-       # return redirect(url_for('home'))
+    if current_user.is_authenticated:
+       return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(
             sa.select(User).where(User.email == form.email.data))
-        #if user is None or not user.check_password(form.password.data):
-         #   flash('Invalid username or password', 'danger')
-          #  return redirect(url_for('login'))
+        if user is None or not user.check_password(form.password.data):
+           flash('Invalid username or password', 'danger')
+           return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':
