@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     group: so.Mapped['Group'] = relationship('Group', back_populates='users')
+    group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
