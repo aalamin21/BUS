@@ -10,9 +10,6 @@ from app.static.module_list import module_list
 from urllib.parse import urlsplit
 from app.utils import suggest_groups_for_user
 
-from app.static.dt_lists import days, time_slots
-
-
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
     total_slots_per_day = len(time_slots)

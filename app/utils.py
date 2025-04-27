@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 from .models import User
 from .availability_utils import flatten_availability
-from app.static.module_list import modules
+from app.static.module_list import module_list
 
 NUM_SLOTS = 70  # 7 days * 10 time slots
 MODULE_WEIGHT = 0.5
@@ -12,7 +12,7 @@ OVERLAP_WEIGHT = 0.2
 
 def get_user_modules(user):
     """Get valid modules for a user, ignoring unselected (-1)"""
-    return [modules[i] for i in [user.module1, user.module2, user.module3] if i >= 0]
+    return [module_list[i] for i in [user.module1, user.module2, user.module3] if i >= 0]
 
 
 def jaccard_similarity(vec1, vec2):
