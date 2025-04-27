@@ -7,9 +7,29 @@ import sqlalchemy as sa
 from app import db
 from app.static.dt_lists import days, time_slots
 from urllib.parse import urlsplit
+from app.utils import suggest_groups_for_user
+
+from app.static.dt_lists import days, time_slots
 
 
+def slot_to_time(slot_index):
+    """Convert a slot index to human-readable time"""
+    total_slots_per_day = len(time_slots)
+    day_idx = slot_index // total_slots_per_day
+    time_idx = slot_index % total_slots_per_day
 
+    try:
+        day = days[day_idx][1]  # Get full day name
+        time = time_slots[time_idx][1]
+        return f"{day} {time}"
+    except IndexError:
+        return "Unknown Time"
+
+
+# Creates the Jinja filter
+@app.template_filter('slot_to_time')
+def slot_to_time_filter(slot_index):
+    return slot_to_time(slot_index)
 @app.route("/")
 def start():
     return render_template('startpage.html', title="Start")

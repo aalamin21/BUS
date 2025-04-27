@@ -8,6 +8,14 @@
         <div class="card my-3">
             <div class="card-body">
                 <h5 class="card-title">Group {{ loop.index }}</h5>
+
+                 {% if group.common_modules %}
+                <div class="alert alert-success py-2 mb-3">
+                    <strong>Shared Modules:</strong>
+                    {{ group.common_modules|join(', ') }}
+                </div>
+                {% endif %}
+
                 <p><strong>Members:</strong> {{ group.group_members | join(', ') }}</p>
 
                 <p><strong>Shared Time Slots:</strong>
@@ -20,7 +28,20 @@
                     {% endif %}
                 </p>
 
-                <p><strong>Match Score:</strong> {{ group.match_score }}</p>
+
+                <div class="d-flex align-items-center">
+                    <strong class="me-2">Match Score:</strong>
+                    <div class="progress flex-grow-1" style="height: 20px;">
+                        <div class="progress-bar"
+                             role="progressbar"
+                             style="width: {{ group.match_score * 100 }}%"
+                             aria-valuenow="{{ group.match_score * 100 }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            {{ (group.match_score * 100)|round(1) }}%
+                        </div>
+                    </div>
+                </div>
 
                 <form action="{{ url_for('join_group') }}" method="post">
                     <input type="hidden" name="group_members" value="{{ group.group_members | join(',') }}">
@@ -30,6 +51,9 @@
         </div>
     {% endfor %}
 {% else %}
-    <p>No matching groups found. Try updating your availability.</p>
+
+    <div class="alert alert-warning">
+        No matching groups found. Try updating your availability.
+    </div>
 {% endif %}
 {% endblock %}
