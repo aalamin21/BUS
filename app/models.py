@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login
 from dataclasses import dataclass
 import datetime
-from app.static.dt_lists import days, time_slots
+from .availability_utils import days, time_slots
 
 def default_av():
     av = {}
@@ -35,7 +35,7 @@ class User(UserMixin, db.Model):
     module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
-    groups: so.Mapped[list['Membership']] = relationship('Membership', back_populates='user')
+    group: so.Mapped['Group'] = relationship('Group', back_populates='users')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -57,19 +57,9 @@ class Group(db.Model):
     __tablename__ = 'groups'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    members: so.Mapped[list['Membership']] = relationship('Membership', back_populates='group')
+    users: so.Mapped[list['User']] = relationship('User', back_populates='group')
     group_av: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
 
     def __repr__(self):
         return f'Group(id={self.id}), Members: {self.members}'
 
-class Membership(db.Model):
-    __tablename__ = 'memberships'
-
-    user_id: so.Mapped[int] = so.mapped_column(ForeignKey('users.id'), primary_key=True)
-    group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), primary_key=True)
-    group: so.Mapped['Group'] = relationship('Group', back_populates='members')
-    user: so.Mapped['User'] = relationship('User', back_populates='groups')
-
-    def __repr__(self):
-        return f'Membership(user_id={self.user_id}, group_id={self.group_id})'

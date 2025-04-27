@@ -7,8 +7,8 @@ from wtforms.validators import DataRequired, EqualTo, NumberRange, ValidationErr
 from email_validator import EmailNotValidError, validate_email
 from app import db
 from app.models import User
-from app.static.dt_lists import days, time_slots
-from app.static.module_list import module_list
+from .availability_utils import days, time_slots
+from .module_utils import module_list
 import datetime
 
 

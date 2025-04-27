@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 from .models import User
 from .availability_utils import flatten_availability
-from app.static.module_list import module_list
+from .module_utils import module_list
 
 NUM_SLOTS = 70  # 7 days * 10 time slots
 MODULE_WEIGHT = 0.5

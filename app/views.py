@@ -5,10 +5,10 @@ from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm,
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
-from app.static.dt_lists import days, time_slots
-from app.static.module_list import module_list
+from .availability_utils import days, time_slots
+from .module_utils import module_list
 from urllib.parse import urlsplit
-from app.utils import suggest_groups_for_user
+from .utils import suggest_groups_for_user
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -134,17 +134,6 @@ def modules():
     return render_template('modules.html',
                            title='Modules', form=form)
 
-@app.route('/groups_page')
-@login_required
-def groups_page():
-    groups = db.session.scalars(db.select(Group))
-    # print(groups[0].id)
-    # for group in groups:
-    #     print(group.id)
-    # print('~~~~~~~~HERE~~~~~~~~')
-
-    return render_template('groups.html', title='Groups', groups=groups)
-
 @app.route("/suggest-groups")
 @login_required
 def suggest_groups():
@@ -154,13 +143,19 @@ def suggest_groups():
 @app.route("/join-group", methods=["POST"])
 @login_required
 def join_group():
-    from flask import request, redirect, flash
     group_members = request.form.get("group_members")
     # TODO: Store group in DB. For now, just confirm it worked.
     flash(f"You joined a group with: {group_members}", "success")
     return redirect(url_for("suggest_groups"))
 
-
+@app.route("/group-page/<int:id>", methods=["POST"])
+@login_required
+def group_page(id):
+    group = db.session.query(Group).get(id)
+    if group is None:
+        flash("Group not found", "danger")
+        return redirect(url_for("suggest_groups"))
+    return render_template("group_page.html", title=f'Group {id}', group=group)
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
