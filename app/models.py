@@ -16,7 +16,7 @@ def default_av():
     for day_code, day_name in days:
         av[day_code] = {}
         for time_code, time_name in time_slots:
-            av[day_code][time_code] = True
+            av[day_code][time_code] = False
     return av
 
 @dataclass
