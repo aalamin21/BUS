@@ -27,7 +27,7 @@ def jaccard_similarity(vec1, vec2):
 
 
 def suggest_groups_for_user(current_user, group_size=4, top_n=3):
-    user_vec = np.array(flatten_availability(current_user.availability))
+    user_vec = np.array(current_user.availability)
     print("Current user availability:", current_user.availability)
     print("Flattened vector:", user_vec)
 
@@ -36,7 +36,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     all_users = {u.id: "{} {}".format(u.first_name, u.last_name) for u in User.query.all()}  # ✅ CORRECTLY PLACED
 
     user_data = {
-        u.id: np.array(flatten_availability(u.availability))
+        u.id: np.array(u.availability)
         for u in other_users
     }
 
