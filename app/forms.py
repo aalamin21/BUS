@@ -45,10 +45,10 @@ class AvailabilityForm(FlaskForm):
     submit = SubmitField('Save Availability')
 
 class ModuleForm(FlaskForm):
-    module1 = SelectField('Module 1', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)],
+    module1 = SelectField('Module 1', choices=[(i, module) for i, module in module_list.items()],
                           validators=[DataRequired(message="Must select at least one module")])
-    module2 = SelectField('Module 2', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)])
-    module3 = SelectField('Module 3', choices=[(-1," ")]+[(i, module) for i, module in enumerate(module_list)])
+    module2 = SelectField('Module 2', choices=[(i, module) for i, module in module_list.items()])
+    module3 = SelectField('Module 3', choices=[(i, module) for i, module in module_list.items()])
 
     submit = SubmitField('Save Module Selections')
 

@@ -1,10 +1,4 @@
-DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-TIMES = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18"]
-
-day_map = {
-    "monday": "Mon", "tuesday": "Tue", "wednesday": "Wed",
-    "thursday": "Thu", "friday": "Fri", "saturday": "Sat", "sunday": "Sun"
-}
+from app import app
 
 time_slots = [
     ('0900', '09:00 AM'),
@@ -29,31 +23,33 @@ days = [
     ('sunday', 'Sunday')
 ]
 
+def default_av(bool):
+    return [1 if bool else 0] * len(days) * len(time_slots)
+
 def flatten_availability(availability):
     vector = []
-
-    # Lowercase and normalize all keys up front
-    normalized_avail = {}
-    for raw_day, slots in availability.items():
-        short_day = day_map.get(raw_day.lower(), raw_day[:3].capitalize())
-        normalized_avail[short_day] = {}
-        for raw_time, is_free in slots.items():
-            if isinstance(raw_time, str) and len(raw_time) == 4 and raw_time.endswith("00"):
-                hour = raw_time[:2]
-            elif isinstance(raw_time, str) and raw_time in TIMES:
-                hour = raw_time
-            else:
-                hour = None
-
-            if hour in TIMES:
-                normalized_avail[short_day][hour] = is_free
-
-    # Now construct the vector
-    for day in DAYS:
-        for hour in TIMES:
-            vector.append(1 if normalized_avail.get(day, {}).get(hour, False) else 0)
-
+    for day_code, day_name in days:
+        for time_code, time_name in time_slots:
+            vector.append(1 if availability[day_code][time_code] else 0)
     return vector
 
+def group_availability(*avs):
+    avs = list(map(list, avs))
+    length = len(avs[0])
+    return [int(all(av[i] for av in avs)) for i in range(length)]
 
+def av_vec_to_dict(av):
+    if len(av) != len(days)*len(time_slots):
+        app.logger.error('Incorrect availability format')
+        return
+    idx = 0
+    av_dict = {}
+    for day_code, day in days:
+        av_dict[day_code] = {}
+        for time_code, time_name in time_slots:
+            av_dict[day_code][time_code] = bool(av[idx])
+            idx += 1
 
+    return av_dict
+
+app.jinja_env.globals.update(av_vec_to_dict=av_vec_to_dict)

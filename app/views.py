@@ -5,7 +5,7 @@ from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm,
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
-from .availability_utils import days, time_slots
+from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
@@ -28,6 +28,7 @@ def slot_to_time(slot_index):
 @app.template_filter('slot_to_time')
 def slot_to_time_filter(slot_index):
     return slot_to_time(slot_index)
+
 @app.route("/")
 def start():
     return render_template('startpage.html', title="Start")
@@ -40,6 +41,9 @@ def home():
 @app.route("/account")
 @login_required
 def account():
+    print(current_user.availability)
+    print(av_vec_to_dict(current_user.availability))
+    print("~~~~~~~~~~HERE~~~~~~~~~~~~")
     return render_template('account.html', title="Account",
                            days=days, time_slots=time_slots, module_list=module_list)
 
@@ -100,14 +104,14 @@ def availability():
                 field_name = f'{day_code}_{time_code}'
                 availability[day_code][time_code] = form.data[field_name]
 
-        current_user.availability = availability
-
+        current_user.availability = flatten_availability(availability)
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
-        return redirect(url_for('modules'))
+        return redirect(url_for('account'))
 
     user_availability = current_user.availability
+    user_availability = av_vec_to_dict(user_availability)
     if user_availability:
         for day_code in user_availability:
             for time_code in user_availability[day_code]:

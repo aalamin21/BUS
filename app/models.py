@@ -2,22 +2,36 @@ from typing import Optional, Dict
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Integer, Text
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import relationship
+import json
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login
 from dataclasses import dataclass
-import datetime
-from .availability_utils import days, time_slots
+from .availability_utils import default_av, group_availability
 
-def default_av():
-    av = {}
+class IntegerList(TypeDecorator):
+    impl = Text
 
-    for day_code, day_name in days:
-        av[day_code] = {}
-        for time_code, time_name in time_slots:
-            av[day_code][time_code] = False
-    return av
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if not isinstance(value, list):
+                raise ValueError("Value must be a list")
+            if not all(isinstance(x, int) for x in value):
+                raise ValueError("All elements in the list must be integers")
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = json.loads(value)
+            if not isinstance(value, list):
+                raise ValueError("Stored value is not a list")
+            if not all(isinstance(x, int) for x in value):
+                raise ValueError("Stored value does not contain all integers")
+        return value
 
 @dataclass
 class User(UserMixin, db.Model):
@@ -31,7 +45,7 @@ class User(UserMixin, db.Model):
     course_name: so.Mapped[str] = so.mapped_column(sa.String(64))
     year_of_study: so.Mapped[int] = so.mapped_column(sa.Integer)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
-    availability: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
+    availability: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(False))
     module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
@@ -59,7 +73,11 @@ class Group(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
-    group_av: so.Mapped[Dict[str, Dict[str, bool]]] = so.mapped_column(sa.JSON, default=default_av())
+    group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
+
+    def add_user(self, user: User):
+        self.users.append(user)
+        self.group_av = group_availability(self.group_av, user.availability)
 
     def __repr__(self):
         return f'Group(id={self.id}), Members: {self.members}'

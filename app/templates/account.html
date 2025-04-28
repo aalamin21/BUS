@@ -25,7 +25,7 @@
     </td>
     {% for day_code, day_name in days %}
         {% if current_user.availability %}
-            {% if current_user.availability[day_code][time_code] %}
+            {% if av_vec_to_dict(current_user.availability)[day_code][time_code] %}
                 <td class="table-success"> </td>
             {% else %}
                 <td> </td>
