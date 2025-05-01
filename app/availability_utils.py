@@ -52,4 +52,15 @@ def av_vec_to_dict(av):
 
     return av_dict
 
+def slot_overlap(slots1, slots2):
+    return sum(a and b for a, b in zip(slots1, slots2)) >= 2
+
+def slot_to_human(slot_index):
+    day_index = slot_index // len(time_slots)
+    time_index = slot_index % len(time_slots)
+    day_name = days[day_index][1]
+    time_name = time_slots[time_index][1]
+    return f"{day_name} {time_name}"
+
+
 app.jinja_env.globals.update(av_vec_to_dict=av_vec_to_dict)

@@ -19,6 +19,9 @@ def slot_to_time(index):
 # Register the filter
 app.jinja_env.filters['slot_to_time'] = slot_to_time
 
+from app.availability_utils import slot_to_human
+app.jinja_env.globals.update(slot_to_human=slot_to_human)
+
 app.jinja_env.undefined = StrictUndefined
 app.config.from_object(Config)
 db = SQLAlchemy(app)

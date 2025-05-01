@@ -1,91 +1,140 @@
 import itertools
 import numpy as np
-from .models import User
-from .availability_utils import flatten_availability
+from .models import User, Group
+from .availability_utils import flatten_availability, slot_overlap, slot_to_human
 from .module_utils import module_list
 
-NUM_SLOTS = 70  # 7 days * 10 time slots
+NUM_SLOTS = 70
 MODULE_WEIGHT = 0.5
 AVAILABILITY_WEIGHT = 0.3
 OVERLAP_WEIGHT = 0.2
 
-
 def get_user_modules(user):
-    """Get valid modules for a user, ignoring unselected (-1)"""
-    return [module_list[i] for i in [user.module1, user.module2, user.module3] if i >= 0]
-
+    return set(module_list[i] for i in [user.module1, user.module2, user.module3] if i >= 0)
 
 def jaccard_similarity(vec1, vec2):
-    """Now handles both availability vectors and module sets"""
-    if isinstance(vec1, np.ndarray):  # Availability vectors
+    if isinstance(vec1, np.ndarray):
         intersection = np.sum(np.minimum(vec1, vec2))
         union = np.sum(np.maximum(vec1, vec2))
-    else:  # Module sets
+    else:
         intersection = len(vec1 & vec2)
         union = len(vec1 | vec2)
     return intersection / union if union != 0 else 0
 
+def compute_match_score(mod_sim, avail_sim, overlap_sim=1):
+    return MODULE_WEIGHT * mod_sim + AVAILABILITY_WEIGHT * avail_sim + OVERLAP_WEIGHT * overlap_sim
 
 def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     user_vec = np.array(current_user.availability)
-    print("Current user availability:", current_user.availability)
-    print("Flattened vector:", user_vec)
+    user_modules = get_user_modules(current_user)
 
-    other_users = User.query.filter(User.id != current_user.id).all()
 
-    all_users = {u.id: "{} {}".format(u.first_name, u.last_name) for u in User.query.all()}  # ✅ CORRECTLY PLACED
 
-    user_data = {
-        u.id: np.array(u.availability)
-        for u in other_users
-    }
-
-    #group_candidates = list(itertools.combinations(user_data.keys(), group_size - 1))
-    group_candidates = []
-    for size in range(3, 6):  # 3 others + current user = 4 to 6
-        group_candidates += list(itertools.combinations(user_data.keys(), size))
-
+    existing_groups = Group.query.all()
     scored_groups = []
 
-    for group_ids in group_candidates:
-        group_users = [current_user.id] + list(group_ids)
-        group_vecs = [user_vec] + [user_data[uid] for uid in group_ids]
-        group_matrix = np.stack(group_vecs)
-
-        shared = np.all(group_matrix == 1, axis=0)
-        overlap_score = np.sum(shared) / NUM_SLOTS
-        #  Skip groups with no shared time slots at all
-        if np.sum(shared) == 0:
+    for group in existing_groups:
+        members = group.users
+        if not members:
             continue
 
+        member_scores = []
 
-        group_members = [current_user] + [u for u in other_users if u.id in group_ids]
+        for member in members:
+            mod_sim = jaccard_similarity(user_modules, get_user_modules(member))
+            avail_sim = jaccard_similarity(user_vec, np.array(member.availability))
+            overlap_sim = 1 if slot_overlap(current_user.availability, member.availability) else 0
 
-        # Calculate module compatibility
-        module_scores = []
-        for u1, u2 in itertools.combinations(group_members, 2):
-            mods1 = set(get_user_modules(u1))
-            mods2 = set(get_user_modules(u2))
-            module_scores.append(jaccard_similarity(mods1, mods2))
-        module_score = np.mean(module_scores) if module_scores else 0
+            score = compute_match_score(mod_sim, avail_sim, overlap_sim)
+            member_scores.append(score)
 
-        sim_scores = [
-            jaccard_similarity(group_vecs[i], group_vecs[j])
-            for i in range(len(group_vecs))
-            for j in range(i + 1, len(group_vecs))
-        ]
-        avg_similarity = np.mean(sim_scores)
-        match_score = AVAILABILITY_WEIGHT * avg_similarity + MODULE_WEIGHT * module_score + OVERLAP_WEIGHT * overlap_score
+        avg_score = sum(member_scores) / len(member_scores)
+        scored_groups.append((group, avg_score))
 
-        scored_groups.append({
-            "group_members": [all_users[uid] for uid in group_ids],
-            "shared_slots": np.where(shared == 1)[0].tolist(),
-            "match_score": round(match_score, 2),
-            # MODULE INFO
-            "common_modules": list(set.intersection(
-                *[set(get_user_modules(u)) for u in group_members]
-            )) if group_members else []
-        })
+    scored_groups.sort(key=lambda x: x[1], reverse=True)
+    top_existing_groups = scored_groups[:top_n]
 
-    return sorted(scored_groups, key=lambda g: g["match_score"], reverse=True)[:top_n]
+    # --------------------------
+    # SUGGEST NEW GROUP
+    # --------------------------
+    all_users = User.query.filter(User.id != current_user.id, User.group_id == None).all()
+    scored_users = []
+
+    for u in all_users:
+        mod_sim = jaccard_similarity(user_modules, get_user_modules(u))
+        avail_sim = jaccard_similarity(user_vec, np.array(u.availability))
+        overlap_sim = 1 if slot_overlap(current_user.availability, u.availability) else 0
+        score = compute_match_score(mod_sim, avail_sim, overlap_sim)
+        scored_users.append((u, score))
+
+    scored_users.sort(key=lambda x: x[1], reverse=True)
+    top_users = [u for u, _ in scored_users[:group_size - 1]]
+
+    if len(top_users) + 1 < group_size:
+        new_group = None
+    else:
+        group_users = [current_user] + top_users
+        final_score = sum(score for _, score in scored_users[:group_size - 1]) / len(group_users)
+        new_group = format_group(group_users, score=final_score)
+
+    # --------------------------
+    # RETURN BOTH
+    # --------------------------
+    formatted_existing_groups = [
+        format_group(g.users, score=s) for g, s in top_existing_groups
+    ]
+
+    return formatted_existing_groups, new_group
+
+
+def format_group(users, score=1.0):
+    member_names = [u.first_name for u in users]
+    common_modules = list(set.intersection(*(get_user_modules(u) for u in users)))
+    shared_slots = list(set.intersection(*(set(u.availability) for u in users if u.availability)))
+    return {
+        "group_members": member_names,
+        "common_modules": common_modules,
+        "shared_slots": shared_slots,
+        "match_score": score
+    }
+
+def score_user_to_group(user, group):
+    user_modules = get_user_modules(user)
+    user_avail = np.array(user.availability)
+
+    group_users = group.users
+    if not group_users:
+        return 0
+
+    group_modules = set().union(*(get_user_modules(u) for u in group_users))
+    group_avail = np.array([u.availability for u in group_users if u.availability])
+    if not len(group_avail):
+        return 0
+    group_avg_avail = np.mean(group_avail, axis=0)
+
+    mod_sim = jaccard_similarity(user_modules, group_modules)
+    avail_sim = jaccard_similarity(user_avail, group_avg_avail)
+    overlap_sim = 1 if any(slot_overlap(user.availability, u.availability) for u in group_users) else 0
+
+    return compute_match_score(mod_sim, avail_sim, overlap_sim)
+
+def find_existing_group_matches(current_user, all_groups, top_n=3):
+    scored = []
+    for g in all_groups:
+        if current_user.id in [u.id for u in g.users]:
+            continue
+        score = score_user_to_group(current_user, g)
+        if score > 0:
+            scored.append((g, score))
+    scored.sort(key=lambda x: x[1], reverse=True)
+    formatted = []
+    for g, score in scored[:top_n]:
+        formatted.append(format_group(g.users, score=score))
+    return formatted
+
+def get_all_suggestions(current_user):
+    all_groups = Group.query.all()
+    existing_group_suggestions = find_existing_group_matches(current_user, all_groups)
+    new_group_suggestions = suggest_groups_for_user(current_user)
+    return existing_group_suggestions + new_group_suggestions
 

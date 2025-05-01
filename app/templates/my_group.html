@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">My Study Group</h2>
+
+    <p><strong>Group ID:</strong> {{ group.id }}</p>
+
+    <p><strong>Members:</strong>
+        {{ members | map(attribute='first_name') | join(', ') }}
+    </p>
+
+    <p><strong>Shared Modules:</strong>
+        {% for mod in common_modules %}
+            <span class="badge bg-success">{{ mod }}</span>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endfor %}
+    </p>
+
+    <p><strong>Shared Time Slots:</strong>
+        {% for slot in shared_slots %}
+            {{ slot_to_human(slot) }}{% if not loop.last %}, {% endif %}
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endfor %}
+    </p>
+</div>
+{% endblock %}

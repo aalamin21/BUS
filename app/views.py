@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory
+from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory, session
 from app import app
 from app.models import User, Group
 from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
@@ -9,6 +9,8 @@ from .availability_utils import days, time_slots, flatten_availability, av_vec_t
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
+
+from app.utils import get_all_suggestions
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -138,19 +140,84 @@ def modules():
     return render_template('modules.html',
                            title='Modules', form=form)
 
-@app.route("/suggest-groups")
-@login_required
-def suggest_groups():
-    suggestions = suggest_groups_for_user(current_user)
-    return render_template("group_suggestions.html", title='Suggested Groups', suggestions=suggestions)
 
-@app.route("/join-group", methods=["POST"])
+
+@app.route("/suggested_groups")
+@login_required
+def suggested_groups():
+    if current_user.group_id:
+        flash("You’ve already joined a group.")
+        return redirect(url_for("my_group"))
+
+    existing_groups, new_group = suggest_groups_for_user(current_user)
+
+    return render_template("group_suggestions.html",
+                         title="Suggested Study Groups",
+                            existing_groups=existing_groups,
+                           new_group=new_group)
+    suggestions = get_all_suggestions(current_user)
+
+
+@app.route('/join_group', methods=['POST'])
 @login_required
 def join_group():
-    group_members = request.form.get("group_members")
-    # TODO: Store group in DB. For now, just confirm it worked.
-    flash(f"You joined a group with: {group_members}", "success")
-    return redirect(url_for("suggest_groups"))
+    user = db.session.get(User, session['user_id'])
+    group_id = request.form.get("group_id")
+
+    if group_id:
+        #  Join existing group
+        group = Group.query.get(int(group_id))
+        if group:
+            user.group_id = group.id
+            db.session.commit()
+            flash("You have successfully joined the group.", "success")
+        return redirect(url_for('my_group'))
+
+    else:
+        #  Create a new group from suggestion
+        new_group = Group()
+        db.session.add(new_group)
+        db.session.commit()
+
+        user.group_id = new_group.id
+        db.session.commit()
+
+        flash("You've created and joined a new study group!", "success")
+        return redirect(url_for('my_group'))
+
+@app.route("/join_existing_group/<int:group_id>", methods=["POST"])
+@login_required
+def join_existing_group(group_id):
+    group = Group.query.get(group_id)
+    if not group:
+        flash("Group not found.")
+        return redirect(url_for("suggested_groups"))
+
+    if current_user.group_id:
+        flash("You are already in a group.")
+        return redirect(url_for("my_group"))
+
+    current_user.group_id = group.id
+    db.session.commit()
+    flash("You have joined the group!")
+    return redirect(url_for("my_group"))
+
+
+@app.route("/my_group")
+@login_required
+def my_group():
+    if not current_user.group_id:
+        flash("You are not part of any study group yet.")
+        return redirect(url_for("suggested_groups"))
+
+    group = Group.query.get(current_user.group_id)
+    members = group.users
+    common_modules = list(set.intersection(*(set([m.module1, m.module2, m.module3]) for m in members)))
+    shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability)))
+
+    return render_template("my_group.html", title='My Group', group=group, members=members,
+                           common_modules=common_modules, shared_slots=shared_slots)
+
 
 @app.route("/group-page/<int:id>", methods=["POST"])
 @login_required
