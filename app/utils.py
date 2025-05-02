@@ -77,26 +77,25 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         final_score = sum(score for _, score in scored_users[:group_size - 1]) / len(group_users)
         new_group = format_group(group_users, score=final_score)
 
-    # --------------------------
-    # RETURN BOTH
-    # --------------------------
+
     formatted_existing_groups = [
-        format_group(g.users, score=s) for g, s in top_existing_groups
+        format_group(g.users, score=s, group=g) for g, s in top_existing_groups
     ]
 
     return formatted_existing_groups, new_group
 
-
-def format_group(users, score=1.0):
+def format_group(users, score=None, group=None):
     member_names = [u.first_name for u in users]
     common_modules = list(set.intersection(*(get_user_modules(u) for u in users)))
     shared_slots = list(set.intersection(*(set(u.availability) for u in users if u.availability)))
     return {
-        "group_members": member_names,
-        "common_modules": common_modules,
+        "group_members": [u.first_name for u in users],
+        "common_modules": list(common_modules),
         "shared_slots": shared_slots,
-        "match_score": score
+        "match_score": score if score is not None else 0.0,
+        "group": group  #  new key
     }
+
 
 def score_user_to_group(user, group):
     user_modules = get_user_modules(user)

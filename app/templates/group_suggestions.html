@@ -50,6 +50,7 @@
                     </div>
 
                     <form action="{{ url_for('join_group') }}" method="post" class="mt-3">
+                        <input type="hidden" name="group_id" value="{{ group['group'].id }}">
                         <button type="submit" class="btn btn-secondary">Request to Join This Group</button>
                     </form>
                 </div>

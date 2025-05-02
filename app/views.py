@@ -161,7 +161,7 @@ def suggested_groups():
 @app.route('/join_group', methods=['POST'])
 @login_required
 def join_group():
-    user = db.session.get(User, session['user_id'])
+    user = current_user
     group_id = request.form.get("group_id")
 
     if group_id:
