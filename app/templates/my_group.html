@@ -11,7 +11,7 @@
 
     <p><strong>Shared Modules:</strong>
         {% for mod in common_modules %}
-            <span class="badge bg-success">{{ mod }}</span>
+            <span class="badge bg-success">{{ module_list[mod] }}</span>
         {% else %}
             <span class="text-muted">None</span>
         {% endfor %}
@@ -25,4 +25,11 @@
         {% endfor %}
     </p>
 </div>
+
+<div class="container mt-4">
+    <form action="{{ url_for('leave_group') }}" method="post">
+        <button type="submit" class="btn btn-outline-danger">Leave Group</button>
+    </form>
+</div>
+
 {% endblock %}

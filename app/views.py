@@ -202,6 +202,16 @@ def join_existing_group(group_id):
     flash("You have joined the group!")
     return redirect(url_for("my_group"))
 
+@app.route("/leave_group", methods=["POST"])
+@login_required
+def leave_group():
+    user = current_user
+    user.group_id = None
+    db.session.commit()
+    flash("You have left the group.", "info")
+    return redirect(url_for('suggested_groups'))
+
+
 
 @app.route("/my_group")
 @login_required
@@ -216,7 +226,7 @@ def my_group():
     shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability)))
 
     return render_template("my_group.html", title='My Group', group=group, members=members,
-                           common_modules=common_modules, shared_slots=shared_slots)
+                           common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
 
 
 @app.route("/group-page/<int:id>", methods=["POST"])
