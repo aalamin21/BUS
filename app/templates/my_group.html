@@ -18,8 +18,10 @@
     </p>
 
     <p><strong>Shared Time Slots:</strong>
-        {% for slot in shared_slots %}
-            {{ slot_to_human(slot) }}{% if not loop.last %}, {% endif %}
+        {% for slot in group.group_av %}
+            {% if slot %}
+            	{{ slot_to_human(loop.index0) }}{% if not loop.last %}, {% endif %}
+            {% endif %}
         {% else %}
             <span class="text-muted">None</span>
         {% endfor %}

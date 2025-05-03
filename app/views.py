@@ -43,9 +43,6 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-    print(current_user.availability)
-    print(av_vec_to_dict(current_user.availability))
-    print("~~~~~~~~~~HERE~~~~~~~~~~~~")
     return render_template('account.html', title="Account",
                            days=days, time_slots=time_slots, module_list=module_list)
 
@@ -75,8 +72,8 @@ def logout():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    #if current_user.is_authenticated:
-     #   return redirect(url_for('home'))
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         new_user = User(first_name=form.first_name.data, last_name=form.last_name.data,
@@ -107,6 +104,8 @@ def availability():
                 availability[day_code][time_code] = form.data[field_name]
 
         current_user.availability = flatten_availability(availability)
+        if current_user.group:
+            current_user.group.update_availability()
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
@@ -146,7 +145,7 @@ def modules():
 @login_required
 def suggested_groups():
     if current_user.group_id:
-        flash("You’ve already joined a group.")
+        flash("You’ve already joined a group.", "danger")
         return redirect(url_for("my_group"))
 
     existing_groups, new_group = suggest_groups_for_user(current_user)
@@ -155,20 +154,17 @@ def suggested_groups():
                          title="Suggested Study Groups",
                             existing_groups=existing_groups,
                            new_group=new_group)
-    suggestions = get_all_suggestions(current_user)
-
 
 @app.route('/join_group', methods=['POST'])
 @login_required
 def join_group():
-    user = current_user
     group_id = request.form.get("group_id")
 
     if group_id:
         #  Join existing group
         group = Group.query.get(int(group_id))
         if group:
-            user.group_id = group.id
+            group.add_user(current_user)
             db.session.commit()
             flash("You have successfully joined the group.", "success")
         return redirect(url_for('my_group'))
@@ -179,36 +175,18 @@ def join_group():
         db.session.add(new_group)
         db.session.commit()
 
-        user.group_id = new_group.id
+        current_user.group_id = new_group.id
         db.session.commit()
 
         flash("You've created and joined a new study group!", "success")
         return redirect(url_for('my_group'))
 
-@app.route("/join_existing_group/<int:group_id>", methods=["POST"])
-@login_required
-def join_existing_group(group_id):
-    group = Group.query.get(group_id)
-    if not group:
-        flash("Group not found.")
-        return redirect(url_for("suggested_groups"))
-
-    if current_user.group_id:
-        flash("You are already in a group.")
-        return redirect(url_for("my_group"))
-
-    current_user.group_id = group.id
-    db.session.commit()
-    flash("You have joined the group!")
-    return redirect(url_for("my_group"))
-
 @app.route("/leave_group", methods=["POST"])
 @login_required
 def leave_group():
-    user = current_user
-    user.group_id = None
+    current_user.group.remove_user(current_user)
     db.session.commit()
-    flash("You have left the group.", "info")
+    flash("You have left the group.", "success")
     return redirect(url_for('suggested_groups'))
 
 
@@ -217,26 +195,16 @@ def leave_group():
 @login_required
 def my_group():
     if not current_user.group_id:
-        flash("You are not part of any study group yet.")
+        flash("You are not part of any study group yet.", "danger")
         return redirect(url_for("suggested_groups"))
 
     group = Group.query.get(current_user.group_id)
     members = group.users
-    common_modules = list(set.intersection(*(set([m.module1, m.module2, m.module3]) for m in members)))
-    shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability)))
+    common_modules = list(set.intersection(*(set([m.module1, m.module2, m.module3]) for m in members))) # Todo: create a common module list in group database
+    shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability))) # Todo: Use group availability from database
 
     return render_template("my_group.html", title='My Group', group=group, members=members,
                            common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
-
-
-@app.route("/group-page/<int:id>", methods=["POST"])
-@login_required
-def group_page(id):
-    group = db.session.query(Group).get(id)
-    if group is None:
-        flash("Group not found", "danger")
-        return redirect(url_for("suggest_groups"))
-    return render_template("group_page.html", title=f'Group {id}', group=group)
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

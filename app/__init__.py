@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-
+from app.availability_utils import slot_to_human, group_availability, av_vec_to_dict
 
 app = Flask(__name__)
 # Jinja filter to convert availability slot index to readable time
@@ -19,8 +19,8 @@ def slot_to_time(index):
 # Register the filter
 app.jinja_env.filters['slot_to_time'] = slot_to_time
 
-from app.availability_utils import slot_to_human
 app.jinja_env.globals.update(slot_to_human=slot_to_human)
+app.jinja_env.globals.update(av_vec_to_dict=av_vec_to_dict)
 
 app.jinja_env.undefined = StrictUndefined
 app.config.from_object(Config)

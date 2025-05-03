@@ -75,9 +75,16 @@ class Group(db.Model):
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
     group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
 
+    def update_availability(self):
+        self.group_av = group_availability(*(user.availability for user in self.users))
+
     def add_user(self, user: User):
         self.users.append(user)
-        self.group_av = group_availability(self.group_av, user.availability)
+        self.update_availability()
+
+    def remove_user(self, user: User):
+        self.users.remove(user)
+        self.update_availability()
 
     def __repr__(self):
         return f'Group(id={self.id}), Members: {self.members}'

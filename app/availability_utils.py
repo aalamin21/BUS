@@ -1,5 +1,3 @@
-from app import app
-
 time_slots = [
     ('0900', '09:00 AM'),
     ('1000', '10:00 AM'),
@@ -40,8 +38,7 @@ def group_availability(*avs):
 
 def av_vec_to_dict(av):
     if len(av) != len(days)*len(time_slots):
-        app.logger.error('Incorrect availability format')
-        return
+        raise ValueError('Invalid availability vector')
     idx = 0
     av_dict = {}
     for day_code, day in days:
@@ -61,6 +58,3 @@ def slot_to_human(slot_index):
     day_name = days[day_index][1]
     time_name = time_slots[time_index][1]
     return f"{day_name} {time_name}"
-
-
-app.jinja_env.globals.update(av_vec_to_dict=av_vec_to_dict)
