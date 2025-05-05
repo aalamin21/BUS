@@ -5,12 +5,14 @@
     <h2 class="mb-4">{{ title }}</h2>
 
     {% if current_user.group.group_av %}
-        <h5 class="mb-3">Study Buddy suggests you meet at one of these times : </h5>
+        <h5 class="mb-3">Study Buddy suggests you meet at one of these times: </h5>
         <ul class="list-group">
             {% for slot in current_user.group.group_av %}
                 {% if slot %}
+                    {% set rooms = ['Group Study Room A', 'Group Study Room B', 'Group Study Room C', 'Group Study Room D', 'Group Study Room E'] %}
                     <li class="list-group-item">
-                        {{ slot_to_human(loop.index0) }}
+                        {{ slot_to_human(loop.index0) }} - {{ rooms[loop.index0 % rooms|length] }}
+                        <button name="slot_index" value="{{ loop.index0 }}" class="btn btn-sm btn-primary">Vote</button>
                     </li>
                 {% endif %}
             {% endfor %}
