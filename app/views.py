@@ -161,7 +161,7 @@ def join_group():
     group_id = request.form.get("group_id")
 
     if group_id:
-        #  Join existing group
+        # Join existing group
         group = Group.query.get(int(group_id))
         if group:
             group.add_user(current_user)
@@ -170,7 +170,7 @@ def join_group():
         return redirect(url_for('my_group'))
 
     else:
-        #  Create a new group from suggestion
+        # Create a new group from suggestion
         new_group = Group()
         db.session.add(new_group)
         db.session.commit()
@@ -213,35 +213,7 @@ def suggest_meeting_time():
         flash("You need to be in a group to suggest a meeting time", "danger")
         return redirect(url_for('suggested_groups'))
 
-    # Retrieve the current group and its members
-    group = Group.query.get(current_user.group_id)
-    members = group.users
-
-    # Collect availability for each member
-    member_availabilities = {member.id: member.availability for member in members if member.availability}
-
-    # Now find overlapping times for all group members
-    overlapping_times = get_overlapping_times(member_availabilities)
-
-    # Convert overlapping slots into human-readable time
-    overlapping_slots = [slot_to_human(slot) for slot in overlapping_times]
-
-    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time",
-                           overlapping_slots=overlapping_slots)
-def get_overlapping_times(member_availabilities):
-    # Assume all members have a similar availability structure, so take the first member's availability
-    all_member_times = list(member_availabilities.values())
-
-    # Find common slots: all members must be available at the same time
-    overlapping_times = []
-    for i in range(len(time_slots) * len(days)):  # Total slots
-        if all(all_member[i] == 1 for all_member in all_member_times):
-            overlapping_times.append(i)
-
-    return overlapping_times
-
-
-
+    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time")
 
 
 # Error handlers

@@ -4,13 +4,15 @@
 <div class="container mt-4">
     <h2 class="mb-4">{{ title }}</h2>
 
-    {% if overlapping_slots %}
+    {% if current_user.group.group_av %}
         <h5 class="mb-3">Study Buddy suggests you meet at one of these times : </h5>
         <ul class="list-group">
-            {% for slot in overlapping_slots %}
-                <li class="list-group-item">
-                    {{ slot }}
-                </li>
+            {% for slot in current_user.group.group_av %}
+                {% if slot %}
+                    <li class="list-group-item">
+                        {{ slot_to_human(loop.index0) }}
+                    </li>
+                {% endif %}
             {% endfor %}
         </ul>
     {% else %}
