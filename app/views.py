@@ -5,7 +5,7 @@ from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm,
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 import sqlalchemy as sa
 from app import db
-from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
+from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict, slot_to_human
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
@@ -190,7 +190,6 @@ def leave_group():
     return redirect(url_for('suggested_groups'))
 
 
-
 @app.route("/my_group")
 @login_required
 def my_group():
@@ -205,6 +204,45 @@ def my_group():
 
     return render_template("my_group.html", title='My Group', group=group, members=members,
                            common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
+
+
+@app.route("/suggest_meeting_time", methods=["GET"])
+@login_required
+def suggest_meeting_time():
+    if not current_user.group_id:
+        flash("You need to be in a group to suggest a meeting time", "danger")
+        return redirect(url_for('suggested_groups'))
+
+    # Retrieve the current group and its members
+    group = Group.query.get(current_user.group_id)
+    members = group.users
+
+    # Collect availability for each member
+    member_availabilities = {member.id: member.availability for member in members if member.availability}
+
+    # Now find overlapping times for all group members
+    overlapping_times = get_overlapping_times(member_availabilities)
+
+    # Convert overlapping slots into human-readable time
+    overlapping_slots = [slot_to_human(slot) for slot in overlapping_times]
+
+    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time",
+                           overlapping_slots=overlapping_slots)
+def get_overlapping_times(member_availabilities):
+    # Assume all members have a similar availability structure, so take the first member's availability
+    all_member_times = list(member_availabilities.values())
+
+    # Find common slots: all members must be available at the same time
+    overlapping_times = []
+    for i in range(len(time_slots) * len(days)):  # Total slots
+        if all(all_member[i] == 1 for all_member in all_member_times):
+            overlapping_times.append(i)
+
+    return overlapping_times
+
+
+
+
 
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

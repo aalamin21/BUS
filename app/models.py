@@ -76,7 +76,10 @@ class Group(db.Model):
     group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
 
     def update_availability(self):
-        self.group_av = group_availability(*(user.availability for user in self.users))
+        if not self.users:
+            self.group_av = []
+            return
+        self.group_av = group_availability(*(user.availability for user in self.users if user.availability))
 
     def add_user(self, user: User):
         self.users.append(user)
@@ -84,8 +87,8 @@ class Group(db.Model):
 
     def remove_user(self, user: User):
         self.users.remove(user)
+        user.group_id = None
         self.update_availability()
-
     def __repr__(self):
         return f'Group(id={self.id}), Members: {self.members}'
 

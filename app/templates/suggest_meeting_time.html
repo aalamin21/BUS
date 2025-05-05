@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">{{ title }}</h2>
+
+    {% if overlapping_slots %}
+        <h5 class="mb-3">Study Buddy suggests you meet at one of these times : </h5>
+        <ul class="list-group">
+            {% for slot in overlapping_slots %}
+                <li class="list-group-item">
+                    {{ slot }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-info mt-3">
+            No available meeting times found. Try adjusting your availability to match your peers !
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
