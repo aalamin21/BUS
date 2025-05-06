@@ -1,16 +1,14 @@
-from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory, session
+from flask import render_template, redirect, url_for, flash, request
 from app import app
 from app.models import User, Group
-from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
-from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
+from app.forms import LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
+from flask_login import current_user, login_user, logout_user, login_required
 import sqlalchemy as sa
 from app import db
-from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict, slot_to_human
+from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
-
-from app.utils import get_all_suggestions
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -197,12 +195,12 @@ def my_group():
         flash("You are not part of any study group yet.", "danger")
         return redirect(url_for("suggested_groups"))
 
-    group = Group.query.get(current_user.group_id)
-    members = group.users
-    common_modules = list(set.intersection(*(set([m.module1, m.module2, m.module3]) for m in members))) # Todo: create a common module list in group database
-    shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability))) # Todo: Use group availability from database
+    group = current_user.group
 
-    return render_template("my_group.html", title='My Group', group=group, members=members,
+    common_modules = list(set.intersection(*({m.module1, m.module2, m.module3} for m in group.users)))
+    shared_slots = group.group_av
+
+    return render_template("my_group.html", title='My Group', group=group,
                            common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
 
 

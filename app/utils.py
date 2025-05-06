@@ -1,7 +1,6 @@
-import itertools
 import numpy as np
 from .models import User, Group
-from .availability_utils import flatten_availability, slot_overlap, slot_to_human
+from .availability_utils import slot_overlap
 from .module_utils import module_list
 
 NUM_SLOTS = 70

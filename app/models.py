@@ -1,8 +1,8 @@
-from typing import Optional, Dict
+from typing import Optional
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey, Integer, Text
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import relationship
 import json
@@ -49,7 +49,7 @@ class User(UserMixin, db.Model):
     module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
-    group: so.Mapped['Group'] = relationship('Group', back_populates='users')
+    group: so.Mapped['Group'] = relationship('Group', back_populates='users', cascade='all, delete-orphan', single_parent=True)
     group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), nullable=True)
 
     def set_password(self, password):
