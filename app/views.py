@@ -9,6 +9,7 @@ from .availability_utils import days, time_slots, flatten_availability, av_vec_t
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
+from sqlalchemy import func
 
 from app.utils import get_all_suggestions
 
@@ -218,6 +219,16 @@ def suggest_meeting_time():
 @app.route('/vote', methods=['POST'])
 @login_required
 def vote():
+    votes = (
+        db.session.query(Vote.slot_index, func.count(Vote.id))
+        .filter_by(group_id=current_user.group.id)
+        .group_by(Vote.slot_index)
+        .all()
+    )
+
+    # Turn into a dictionary: {slot_index: count}
+    vote_counts = {slot: count for slot, count in votes}
+
     slot_index = int(request.form.get('slot_index'))
     group_id = current_user.group.id
 
@@ -231,7 +242,8 @@ def vote():
 
     db.session.commit()
     flash("Your vote has been recorded!", "success")
-    return redirect(url_for('suggest_meeting_time'))
+    return redirect(url_for('suggest_meeting_time',title="Suggested Meeting Times",
+    vote_counts=vote_counts))
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 
