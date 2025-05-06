@@ -1,5 +1,8 @@
 from flask import render_template, redirect, url_for, flash, request
 from app import app
+from app.models import User, Group, Vote
+from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
+from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 from app.models import User, Group
 from app.forms import LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
 from flask_login import current_user, login_user, logout_user, login_required
@@ -9,6 +12,7 @@ from .availability_utils import days, time_slots, flatten_availability, av_vec_t
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
+from sqlalchemy import func
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -213,7 +217,34 @@ def suggest_meeting_time():
 
     return render_template("suggest_meeting_time.html", title="Suggest Meeting Time")
 
+@app.route('/vote', methods=['POST'])
+@login_required
+def vote():
+    votes = (
+        db.session.query(Vote.slot_index, func.count(Vote.id))
+        .filter_by(group_id=current_user.group.id)
+        .group_by(Vote.slot_index)
+        .all()
+    )
 
+    # Turn into a dictionary: {slot_index: count}
+    vote_counts = {slot: count for slot, count in votes}
+
+    slot_index = int(request.form.get('slot_index'))
+    group_id = current_user.group.id
+
+    # Prevent duplicate votes
+    existing_vote = Vote.query.filter_by(user_id=current_user.id, group_id=group_id).first()
+    if existing_vote:
+        existing_vote.slot_index = slot_index  # Update existing vote
+    else:
+        vote = Vote(user_id=current_user.id, group_id=group_id, slot_index=slot_index)
+        db.session.add(vote)
+
+    db.session.commit()
+    flash("Your vote has been recorded!", "success")
+    return redirect(url_for('suggest_meeting_time',title="Suggested Meeting Times",
+    vote_counts=vote_counts))
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 

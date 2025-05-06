@@ -45,6 +45,9 @@ class ModuleForm(FlaskForm):
 
     submit = SubmitField('Save Module Selections')
 
+class VoteForm(FlaskForm):
+    submit = SubmitField('Vote')
+
     @staticmethod
     def validate_module2(self, field):
         if int(field.data) != 0 and field.data == self.module1.data:
