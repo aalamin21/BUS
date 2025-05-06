@@ -1,15 +1,8 @@
-from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, HiddenField, StringField, PasswordField, BooleanField, SelectField
-#from wtforms.fields.numeric import IntegerField
-from wtforms.fields.simple import TextAreaField
-from wtforms.validators import DataRequired, EqualTo, NumberRange, ValidationError, Email, Optional, Length
-from email_validator import EmailNotValidError, validate_email
-from app import db
-from app.models import User
+from wtforms.validators import DataRequired, ValidationError, Email
 from .availability_utils import days, time_slots
 from .module_utils import module_list
-import datetime
 
 
 
@@ -52,6 +45,9 @@ class ModuleForm(FlaskForm):
 
     submit = SubmitField('Save Module Selections')
 
+class VoteForm(FlaskForm):
+    submit = SubmitField('Vote')
+
     @staticmethod
     def validate_module2(self, field):
         if int(field.data) != 0 and field.data == self.module1.data:
@@ -59,5 +55,5 @@ class ModuleForm(FlaskForm):
 
     @staticmethod
     def validate_module3(self, field):
-        if int(field.data) != 0 and field.data == self.module2.data or field.data == self.module1.data:
+        if int(field.data) != 0 and (field.data == self.module2.data or field.data == self.module1.data):
             raise ValidationError('Cannot select the same module twice')

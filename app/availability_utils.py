@@ -25,6 +25,10 @@ def default_av(bool):
     return [1 if bool else 0] * len(days) * len(time_slots)
 
 def flatten_availability(availability):
+    """
+    Adaptor function to convert availability from a JSON type structure to a binary list to then be used in the
+    algorithm.
+    """
     vector = []
     for day_code, day_name in days:
         for time_code, time_name in time_slots:

@@ -1,16 +1,18 @@
-from flask import render_template, redirect, url_for, flash, request, send_file, send_from_directory, session
+from flask import render_template, redirect, url_for, flash, request
 from app import app
-from app.models import User, Group
+from app.models import User, Group, Vote
 from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
+from app.models import User, Group
+from app.forms import LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
+from flask_login import current_user, login_user, logout_user, login_required
 import sqlalchemy as sa
 from app import db
-from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict, slot_to_human
+from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user
-
-from app.utils import get_all_suggestions
+from sqlalchemy import func
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -43,6 +45,9 @@ def home():
 @app.route("/account")
 @login_required
 def account():
+    print(current_user.availability)
+    print(av_vec_to_dict(current_user.availability))
+    print("~~~~~~~~~~HERE~~~~~~~~~~~~")
     return render_template('account.html', title="Account",
                            days=days, time_slots=time_slots, module_list=module_list)
 
@@ -109,7 +114,7 @@ def availability():
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
-        return redirect(url_for('account'))
+        return redirect(url_for('modules'))
 
     user_availability = current_user.availability
     user_availability = av_vec_to_dict(user_availability)
@@ -144,6 +149,10 @@ def modules():
 @app.route("/suggested_groups")
 @login_required
 def suggested_groups():
+    """Entry point for group suggestions
+        - Checks existing group membership
+        - Gets algorithm suggestions
+        - Renders template with formatted data"""
     if current_user.group_id:
         flash("You’ve already joined a group.", "danger")
         return redirect(url_for("my_group"))
@@ -161,7 +170,7 @@ def join_group():
     group_id = request.form.get("group_id")
 
     if group_id:
-        #  Join existing group
+        # Join existing group
         group = Group.query.get(int(group_id))
         if group:
             group.add_user(current_user)
@@ -170,7 +179,7 @@ def join_group():
         return redirect(url_for('my_group'))
 
     else:
-        #  Create a new group from suggestion
+        # Create a new group from suggestion
         new_group = Group()
         db.session.add(new_group)
         db.session.commit()
@@ -197,12 +206,12 @@ def my_group():
         flash("You are not part of any study group yet.", "danger")
         return redirect(url_for("suggested_groups"))
 
-    group = Group.query.get(current_user.group_id)
-    members = group.users
-    common_modules = list(set.intersection(*(set([m.module1, m.module2, m.module3]) for m in members))) # Todo: create a common module list in group database
-    shared_slots = list(set.intersection(*(set(m.availability) for m in members if m.availability))) # Todo: Use group availability from database
+    group = current_user.group
 
-    return render_template("my_group.html", title='My Group', group=group, members=members,
+    common_modules = list(set.intersection(*({m.module1, m.module2, m.module3} for m in group.users)))
+    shared_slots = group.group_av
+
+    return render_template("my_group.html", title='My Group', group=group,
                            common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
 
 
@@ -213,37 +222,36 @@ def suggest_meeting_time():
         flash("You need to be in a group to suggest a meeting time", "danger")
         return redirect(url_for('suggested_groups'))
 
-    # Retrieve the current group and its members
-    group = Group.query.get(current_user.group_id)
-    members = group.users
+    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time")
 
-    # Collect availability for each member
-    member_availabilities = {member.id: member.availability for member in members if member.availability}
+@app.route('/vote', methods=['POST'])
+@login_required
+def vote():
+    votes = (
+        db.session.query(Vote.slot_index, func.count(Vote.id))
+        .filter_by(group_id=current_user.group.id)
+        .group_by(Vote.slot_index)
+        .all()
+    )
 
-    # Now find overlapping times for all group members
-    overlapping_times = get_overlapping_times(member_availabilities)
+    # Turn into a dictionary: {slot_index: count}
+    vote_counts = {slot: count for slot, count in votes}
 
-    # Convert overlapping slots into human-readable time
-    overlapping_slots = [slot_to_human(slot) for slot in overlapping_times]
+    slot_index = int(request.form.get('slot_index'))
+    group_id = current_user.group.id
 
-    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time",
-                           overlapping_slots=overlapping_slots)
-def get_overlapping_times(member_availabilities):
-    # Assume all members have a similar availability structure, so take the first member's availability
-    all_member_times = list(member_availabilities.values())
+    # Prevent duplicate votes
+    existing_vote = Vote.query.filter_by(user_id=current_user.id, group_id=group_id).first()
+    if existing_vote:
+        existing_vote.slot_index = slot_index  # Update existing vote
+    else:
+        vote = Vote(user_id=current_user.id, group_id=group_id, slot_index=slot_index)
+        db.session.add(vote)
 
-    # Find common slots: all members must be available at the same time
-    overlapping_times = []
-    for i in range(len(time_slots) * len(days)):  # Total slots
-        if all(all_member[i] == 1 for all_member in all_member_times):
-            overlapping_times.append(i)
-
-    return overlapping_times
-
-
-
-
-
+    db.session.commit()
+    flash("Your vote has been recorded!", "success")
+    return redirect(url_for('suggest_meeting_time',title="Suggested Meeting Times",
+    vote_counts=vote_counts))
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 

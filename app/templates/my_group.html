@@ -6,7 +6,7 @@
     <p><strong>Group ID:</strong> {{ group.id }}</p>
 
     <p><strong>Members:</strong>
-        {{ members | map(attribute='first_name') | join(', ') }}
+        {{ group.users | map(attribute='first_name') | join(', ') }}
     </p>
 
     <p><strong>Shared Modules:</strong>
@@ -36,7 +36,7 @@
 
 <div class="container mt-4">
     <form action="{{ url_for('suggest_meeting_time') }}" method="get">
-        <button type="submit" class="btn btn-primary">Find a time to meet !</button>
+        <button type="submit" class="btn btn-primary">Find a time to meet!</button>
     </form>
 </div>
 

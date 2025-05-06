@@ -1,8 +1,8 @@
-from typing import Optional, Dict
+from typing import Optional
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from flask_login import UserMixin
-from sqlalchemy import ForeignKey, Integer, Text
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import relationship
 import json
@@ -49,8 +49,10 @@ class User(UserMixin, db.Model):
     module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
-    group: so.Mapped['Group'] = relationship('Group', back_populates='users')
+    group: so.Mapped['Group'] = relationship('Group', back_populates='users', cascade='all, delete-orphan', single_parent=True)
     group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), nullable=True)
+    vote_records = db.relationship('Vote', back_populates='user')
+
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -63,6 +65,13 @@ class User(UserMixin, db.Model):
         return (f'User(id={self.id}, first_name={self.first_name},last_name={self.last_name}, email={self.email}, faculty={self.faculty},'
                 f'course_name={self.course_name}, year_of_study={self.year_of_study}, pwh={pwh})')
 
+class Vote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'))
+    slot_index = db.Column(db.Integer)
+    user = db.relationship('User', back_populates='vote_records')
+    group = db.relationship('Group', back_populates='vote_records')
 
 @login.user_loader
 def load_user(id):
@@ -73,7 +82,10 @@ class Group(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
+    # Stores combined availability as bitvector (1=available, 0=busy)
     group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
+    vote_records = db.relationship('Vote', back_populates='group')
+
 
     def update_availability(self):
         if not self.users:
@@ -83,6 +95,8 @@ class Group(db.Model):
 
     def add_user(self, user: User):
         self.users.append(user)
+        # Combine availability using logical AND
+        self.group_av = group_availability(self.group_av, user.availability)
         self.update_availability()
 
     def remove_user(self, user: User):
