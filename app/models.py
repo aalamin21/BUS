@@ -82,6 +82,7 @@ class Group(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
+    # Stores combined availability as bitvector (1=available, 0=busy)
     group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
     vote_records = db.relationship('Vote', back_populates='group')
 
@@ -94,6 +95,8 @@ class Group(db.Model):
 
     def add_user(self, user: User):
         self.users.append(user)
+        # Combine availability using logical AND
+        self.group_av = group_availability(self.group_av, user.availability)
         self.update_availability()
 
     def remove_user(self, user: User):

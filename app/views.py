@@ -45,6 +45,9 @@ def home():
 @app.route("/account")
 @login_required
 def account():
+    print(current_user.availability)
+    print(av_vec_to_dict(current_user.availability))
+    print("~~~~~~~~~~HERE~~~~~~~~~~~~")
     return render_template('account.html', title="Account",
                            days=days, time_slots=time_slots, module_list=module_list)
 
@@ -146,6 +149,10 @@ def modules():
 @app.route("/suggested_groups")
 @login_required
 def suggested_groups():
+    """Entry point for group suggestions
+        - Checks existing group membership
+        - Gets algorithm suggestions
+        - Renders template with formatted data"""
     if current_user.group_id:
         flash("You’ve already joined a group.", "danger")
         return redirect(url_for("my_group"))

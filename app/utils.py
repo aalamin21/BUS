@@ -3,32 +3,46 @@ from .models import User, Group
 from .availability_utils import slot_overlap
 from .module_utils import module_list
 
+# Configuration constants for scoring weights
 NUM_SLOTS = 70
 MODULE_WEIGHT = 0.5
 AVAILABILITY_WEIGHT = 0.3
 OVERLAP_WEIGHT = 0.2
 
 def get_user_modules(user):
+    """Extract valid modules selected by a user, ignoring unselected (-1) entries.
+        Returns a set of module names for similarity comparisons."""
     return set(module_list[i] for i in [user.module1, user.module2, user.module3] if i >= 0)
 
 def jaccard_similarity(vec1, vec2):
-    if isinstance(vec1, np.ndarray):
+    """Calculate Jaccard similarity between two vectors/sets.
+        Handles both availability vectors (numpy arrays) and module sets."""
+    if isinstance(vec1, np.ndarray):  # Availability vector comparison
         intersection = np.sum(np.minimum(vec1, vec2))
         union = np.sum(np.maximum(vec1, vec2))
-    else:
+    else:   # Module set comparison
         intersection = len(vec1 & vec2)
         union = len(vec1 | vec2)
     return intersection / union if union != 0 else 0
 
 def compute_match_score(mod_sim, avail_sim, overlap_sim=1):
+    """Combine individual similarity scores into weighted total match score.
+       Weights are configured by MODULE_WEIGHT, AVAILABILITY_WEIGHT, and OVERLAP_WEIGHT."""
     return MODULE_WEIGHT * mod_sim + AVAILABILITY_WEIGHT * avail_sim + OVERLAP_WEIGHT * overlap_sim
 
 def suggest_groups_for_user(current_user, group_size=4, top_n=3):
+    """Main group suggestion algorithm. Returns two types of suggestions:
+        1. Existing groups the user could join
+        2. New group formed with compatible users
+
+        Process:
+        - Scores existing groups based on average member compatibility
+        - Generates new group suggestions from ungrouped users
+        - Returns formatted suggestions for template rendering"""
     user_vec = np.array(current_user.availability)
     user_modules = get_user_modules(current_user)
 
-
-
+    # Part 1: Score existing groups
     existing_groups = Group.query.all()
     scored_groups = []
 
@@ -37,6 +51,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         if not members:
             continue
 
+        # Calculate compatibility with each group member
         member_scores = []
 
         for member in members:
@@ -47,9 +62,11 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
             score = compute_match_score(mod_sim, avail_sim, overlap_sim)
             member_scores.append(score)
 
+        # Use average score for group recommendation
         avg_score = sum(member_scores) / len(member_scores)
         scored_groups.append((group, avg_score))
 
+    # Get top scored existing groups
     scored_groups.sort(key=lambda x: x[1], reverse=True)
     top_existing_groups = scored_groups[:top_n]
 
@@ -59,6 +76,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     all_users = User.query.filter(User.id != current_user.id, User.group_id == None).all()
     scored_users = []
 
+    # Score individual user compatibility
     for u in all_users:
         mod_sim = jaccard_similarity(user_modules, get_user_modules(u))
         avail_sim = jaccard_similarity(user_vec, np.array(u.availability))
@@ -66,9 +84,11 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         score = compute_match_score(mod_sim, avail_sim, overlap_sim)
         scored_users.append((u, score))
 
+    # Get top compatible users
     scored_users.sort(key=lambda x: x[1], reverse=True)
     top_users = [u for u, _ in scored_users[:group_size - 1]]
 
+    # Format new group suggestion
     if len(top_users) + 1 < group_size:
         new_group = None
     else:
@@ -76,7 +96,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         final_score = sum(score for _, score in scored_users[:group_size - 1]) / len(group_users)
         new_group = format_group(group_users, score=final_score)
 
-
+    # Format existing groups for display
     formatted_existing_groups = [
         format_group(g.users, score=s, group=g) for g, s in top_existing_groups
     ]
@@ -84,6 +104,12 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     return formatted_existing_groups, new_group
 
 def format_group(users, score=None, group=None):
+    """Package group data for template rendering:
+       - Member names
+       - Common modules across members
+       - Shared available time slots
+       - Match score
+       - Original group object (for existing groups)"""
     member_names = [u.first_name for u in users]
     common_modules = list(set.intersection(*(get_user_modules(u) for u in users)))
     shared_slots = list(set.intersection(*(set(u.availability) for u in users if u.availability)))
@@ -92,7 +118,7 @@ def format_group(users, score=None, group=None):
         "common_modules": list(common_modules),
         "shared_slots": shared_slots,
         "match_score": score if score is not None else 0.0,
-        "group": group  #  new key
+        "group": group  #  new key  Pass original group object for existing groups
     }
 
 
