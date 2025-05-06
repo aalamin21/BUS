@@ -52,5 +52,5 @@ class ModuleForm(FlaskForm):
 
     @staticmethod
     def validate_module3(self, field):
-        if int(field.data) != 0 and field.data == self.module2.data or field.data == self.module1.data:
+        if int(field.data) != 0 and (field.data == self.module2.data or field.data == self.module1.data):
             raise ValidationError('Cannot select the same module twice')

@@ -107,7 +107,7 @@ def availability():
         db.session.commit()
 
         flash('Availability saved successfully', 'success')
-        return redirect(url_for('account'))
+        return redirect(url_for('modules'))
 
     user_availability = current_user.availability
     user_availability = av_vec_to_dict(user_availability)
