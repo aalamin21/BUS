@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request
 from app import app
-from app.models import User, Group, Vote
+from app.models import User, Group
 from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
 from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
 from app.models import User, Group
@@ -45,9 +45,6 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-    print(current_user.availability)
-    print(av_vec_to_dict(current_user.availability))
-    print("~~~~~~~~~~HERE~~~~~~~~~~~~")
     return render_template('account.html', title="Account",
                            days=days, time_slots=time_slots, module_list=module_list)
 

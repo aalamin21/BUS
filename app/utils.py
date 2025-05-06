@@ -1,4 +1,6 @@
 import numpy as np
+
+from .availability_utils import group_availability
 from .models import User, Group
 from .availability_utils import slot_overlap
 from .module_utils import module_list
@@ -80,6 +82,8 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     for u in all_users:
         mod_sim = jaccard_similarity(user_modules, get_user_modules(u))
         avail_sim = jaccard_similarity(user_vec, np.array(u.availability))
+        print(avail_sim)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~")
         overlap_sim = 1 if slot_overlap(current_user.availability, u.availability) else 0
         score = compute_match_score(mod_sim, avail_sim, overlap_sim)
         scored_users.append((u, score))
@@ -110,9 +114,10 @@ def format_group(users, score=None, group=None):
        - Shared available time slots
        - Match score
        - Original group object (for existing groups)"""
-    member_names = [u.first_name for u in users]
     common_modules = list(set.intersection(*(get_user_modules(u) for u in users)))
-    shared_slots = list(set.intersection(*(set(u.availability) for u in users if u.availability)))
+    shared_slots = group_availability(*(user.availability for user in users))
+    print(shared_slots)
+    print('~~~~~~~~~~~~~~~~~~~~')
     return {
         "group_members": [u.first_name for u in users],
         "common_modules": list(common_modules),
