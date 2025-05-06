@@ -97,7 +97,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         new_group = None
     else:
         group_users = [current_user] + top_users
-        final_score = sum(score for _, score in scored_users[:group_size - 1]) / len(group_users)
+        final_score = sum(score for _, score in scored_users[:group_size - 1]) / (group_size -1)
         new_group = format_group(group_users, score=final_score)
 
     # Format existing groups for display
