@@ -78,11 +78,15 @@ class Group(db.Model):
     bookings: so.Mapped[list['Booking']] = relationship('Booking', back_populates='group', cascade='all, delete-orphan', single_parent=True)
 
     def update_availability(self):
-        self.group_av = group_availability(*(user.availability for user in self.users if user.availability))
+        try:
+            self.group_av = group_availability(*(user.availability for user in self.users if user.availability))
+        except IndexError:
+            self.group_av = default_av(True)
 
     def add_user(self, user: User):
         self.users.append(user)
         # Combine availability using logical AND
+        self.group_av = self.group_av if self.group_av else default_av(True)
         self.group_av = group_availability(self.group_av, user.availability)
         self.update_availability()
 

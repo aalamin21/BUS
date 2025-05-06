@@ -186,9 +186,7 @@ def join_group():
         # Create a new group from suggestion
         new_group = Group()
         db.session.add(new_group)
-        db.session.commit()
-
-        current_user.group_id = new_group.id
+        new_group.add_user(current_user)
         db.session.commit()
 
         flash("You've created and joined a new study group!", "success")
