@@ -90,7 +90,9 @@
                 <p class="card-text"><strong>Shared Time Slots:</strong>
                     {% if new_group.shared_slots %}
                         {% for slot in new_group.shared_slots %}
-                            {{ slot_to_human(slot) }}{% if not loop.last %}, {% endif %}
+                            {% if slot %}
+                                {{ slot_to_human(loop.index0) }}{% if not loop.last %}, {% endif %}
+                            {% endif %}
                         {% endfor %}
                     {% else %}
                         <span class="text-muted">No shared time slots</span>
