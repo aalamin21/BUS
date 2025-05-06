@@ -9,7 +9,6 @@
         <ul class="list-group">
             {% for slot in current_user.group.group_av %}
                 {% if slot %}
-                    {% set rooms = ['Group Study Room A', 'Group Study Room B', 'Group Study Room C', 'Group Study Room D', 'Group Study Room E'] %}
                     <li class="list-group-item">
                         {{ slot_to_human(loop.index0) }} - {{ rooms[loop.index0 % rooms|length] }}
                         <button type="submit" name="slot_index" value="{{ loop.index0 }}" class="btn btn-sm btn-primary">Vote</button>
@@ -19,7 +18,7 @@
         </ul>
     {% else %}
         <div class="alert alert-info mt-3">
-            No available meeting times found. Try adjusting your availability to match your peers !
+            No available meeting times found. Try adjusting your availability to match your peers!
         </div>
     {% endif %}
 

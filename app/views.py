@@ -11,7 +11,7 @@ from app import db
 from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
 from .module_utils import module_list
 from urllib.parse import urlsplit
-from .utils import suggest_groups_for_user
+from .utils import suggest_groups_for_user, rooms
 from sqlalchemy import func
 
 def slot_to_time(slot_index):
@@ -52,6 +52,7 @@ def account():
                            days=days, time_slots=time_slots, module_list=module_list)
 
 
+"""Standard LOGIN page, with email and password fields - for login, use database values in debug_utils.py."""
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -75,6 +76,8 @@ def logout():
     logout_user()
     return redirect(url_for('start'))
 
+"""Page 1/3 of 3 page registration, asks for user information that is stored in user database (See models). 
+Includes validation for email addresses if duplicate"""
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -96,6 +99,7 @@ def register():
         return redirect(url_for('availability'))
     return render_template('register.html', title='Register', form=form)
 
+"""Page 2/3 of 3 page registration, asks for user availability that is stored in user database (See models). """
 @app.route('/availability', methods=['GET', 'POST'])
 @login_required
 def availability():
@@ -127,6 +131,9 @@ def availability():
     return render_template('availability.html',
                            title='Availability', form=form)
 
+
+"""Page 3/3 of 3 page registration, asks for modules that user wants to work on, can choose up to 3 but at 
+least one. """
 @app.route('/modules', methods=['GET', 'POST'])
 @login_required
 def modules():
@@ -222,8 +229,10 @@ def suggest_meeting_time():
         flash("You need to be in a group to suggest a meeting time", "danger")
         return redirect(url_for('suggested_groups'))
 
-    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time")
+    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time", rooms=rooms)
 
+
+"""user vote function to choose and book a revision slot based on group preference"""
 @app.route('/vote', methods=['POST'])
 @login_required
 def vote():
