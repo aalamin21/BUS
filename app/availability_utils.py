@@ -68,4 +68,4 @@ def slot_to_human(slot_index):
     time_index = slot_index % len(time_slots)
     day_name = days[day_index][1]
     time_name = time_slots[time_index][1]
-    return f"{day_name} {time_name}"a
+    return f"{day_name} {time_name}"
