@@ -33,11 +33,38 @@
         <button type="submit" class="btn btn-outline-danger">Leave Group</button>
     </form>
 </div>
-
 <div class="container mt-4">
-    <form action="{{ url_for('suggest_meeting_time') }}" method="get">
-        <button type="submit" class="btn btn-primary">Find a time to meet!</button>
-    </form>
+    {% if group.bookings %}
+        <h2>Booking Details:</h2><br>
+        {% for booking in group.bookings %}
+            <h3>Booking {{ loop.index }}</h3>
+            <div class="row">
+                <div class="col">
+                    <p>Time: {{ slot_to_human(booking.time_slot) }}</p>
+                    <p>Location: {{ booking.room }}</p>
+                </div>
+                <div class="col">
+                    <form action="{{ url_for('remove_booking') }}" method="post">
+                        {{ form.csrf_token() }}
+                        {{ form.choice(value=booking.id) }}
+                        <button class="btn btn-danger" type="submit">
+                            Remove Booking
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+
+        <form action="{{ url_for('suggest_meeting_time') }}" method="get">
+            <button type="submit" class="btn btn-primary">Add a booking</button>
+        </form>
+
+    {% else %}
+        <form action="{{ url_for('suggest_meeting_time') }}" method="get">
+            <button type="submit" class="btn btn-primary">Find a time to meet!</button>
+        </form>
+    {% endif %}
 </div>
 
 {% endblock %}
