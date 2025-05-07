@@ -59,6 +59,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def change_time(self, time_slot):
+        av = list(self.availability)
+        av[time_slot] = 0 if av[time_slot] else 1
+        self.availability = av
+
+
     def __repr__(self):
         pwh= 'None' if not self.password_hash else f'...{self.password_hash[-5:]}'
         return (f'User(id={self.id}, first_name={self.first_name},last_name={self.last_name}, email={self.email}, faculty={self.faculty},'
@@ -74,20 +80,19 @@ class Group(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
-    group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(True))
+    group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(False))
     bookings: so.Mapped[list['Booking']] = relationship('Booking', back_populates='group', cascade='all, delete-orphan', single_parent=True)
 
     def update_availability(self):
         try:
             self.group_av = group_availability(*(user.availability for user in self.users if user.availability))
         except IndexError:
-            self.group_av = default_av(True)
+            self.group_av = default_av(False)
 
     def add_user(self, user: User):
         self.users.append(user)
         # Combine availability using logical AND
         self.group_av = self.group_av if self.group_av else default_av(True)
-        self.group_av = group_availability(self.group_av, user.availability)
         self.update_availability()
 
     def remove_user(self, user: User):

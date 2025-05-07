@@ -1,18 +1,13 @@
 from flask import render_template, redirect, url_for, flash, request
-from app import app
-from app.models import User, Group
-from app.forms import ChooseForm, LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
-from flask_login import current_user, login_user, logout_user, login_required, fresh_login_required
-from app.models import User, Group
-from app.forms import LoginForm, AvailabilityForm, RegistrationForm, ModuleForm
+from . import app, db
+from .models import User, Group, Booking
+from .forms import LoginForm, AvailabilityForm, RegistrationForm, ModuleForm, ChooseForm
 from flask_login import current_user, login_user, logout_user, login_required
 import sqlalchemy as sa
-from app import db
-from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict
+from .availability_utils import days, time_slots, flatten_availability, av_vec_to_dict, default_av
 from .module_utils import module_list
 from urllib.parse import urlsplit
 from .utils import suggest_groups_for_user, rooms
-from sqlalchemy import func
 
 def slot_to_time(slot_index):
     """Convert a slot index to human-readable time"""
@@ -204,58 +199,77 @@ def leave_group():
 @app.route("/my_group")
 @login_required
 def my_group():
+    form = ChooseForm()
     if not current_user.group_id:
         flash("You are not part of any study group yet.", "danger")
         return redirect(url_for("suggested_groups"))
 
     group = current_user.group
-
     common_modules = list(set.intersection(*({m.module1, m.module2, m.module3} for m in group.users)))
     shared_slots = group.group_av
 
-    return render_template("my_group.html", title='My Group', group=group,
+    return render_template("my_group.html", title='My Group', group=group, form=form,
                            common_modules=common_modules, shared_slots=shared_slots, module_list=module_list)
 
 
-@app.route("/suggest_meeting_time", methods=["GET"])
+@app.route("/suggest_meeting_time", methods=["GET","POST"])
 @login_required
 def suggest_meeting_time():
+    form = ChooseForm()
     if not current_user.group_id:
         flash("You need to be in a group to suggest a meeting time", "danger")
         return redirect(url_for('suggested_groups'))
+    # if current_user.group.bookings:
+    #     flash("A booking has already been made for your group.", "danger")
+    #     return redirect(url_for("my_group"))
 
-    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time", rooms=rooms)
+    return render_template("suggest_meeting_time.html", title="Suggest Meeting Time", rooms=rooms
+                           , form=form)
 
-
-"""user vote function to choose and book a revision slot based on group preference"""
-@app.route('/vote', methods=['POST'])
+@app.route('/add_booking', methods=['POST'])
 @login_required
-def vote():
-    votes = (
-        db.session.query(Vote.slot_index, func.count(Vote.id))
-        .filter_by(group_id=current_user.group.id)
-        .group_by(Vote.slot_index)
-        .all()
-    )
+def add_booking():
+    form = ChooseForm()
+    if form.validate_on_submit():
+        group = current_user.group
+        time_slot, room_idx = form.choice.data.split(",")
+        room = rooms[int(room_idx)]
+        new_booking = Booking(time_slot=int(time_slot), room=room)
+        group.bookings.append(new_booking)
+        db.session.add(new_booking)
 
-    # Turn into a dictionary: {slot_index: count}
-    vote_counts = {slot: count for slot, count in votes}
+        for user in group.users:
+            user.change_time(int(time_slot))
 
-    slot_index = int(request.form.get('slot_index'))
-    group_id = current_user.group.id
+        group.update_availability()
+        db.session.commit()
+        flash("You have successfully made a booking!", "success")
 
-    # Prevent duplicate votes
-    existing_vote = Vote.query.filter_by(user_id=current_user.id, group_id=group_id).first()
-    if existing_vote:
-        existing_vote.slot_index = slot_index  # Update existing vote
-    else:
-        vote = Vote(user_id=current_user.id, group_id=group_id, slot_index=slot_index)
-        db.session.add(vote)
+    return redirect(url_for('my_group'))
 
-    db.session.commit()
-    flash("Your vote has been recorded!", "success")
-    return redirect(url_for('suggest_meeting_time',title="Suggested Meeting Times",
-    vote_counts=vote_counts))
+@app.route('/remove_booking', methods=['POST'])
+def remove_booking():
+    form = ChooseForm()
+    if not current_user.group_id:
+        flash("You need to be in a group to remove a booking", "danger")
+        return redirect(url_for('suggested_groups'))
+    if not current_user.group.bookings:
+        flash("Your study group has no existing bookings", "danger")
+        return redirect(url_for('my_group'))
+    if form.validate_on_submit():
+        booking = Booking.query.get(int(form.choice.data))
+        if not booking:
+            flash("This booking does not exist", "danger")
+            return redirect(url_for('my_group'))
+        for user in booking.group.users:
+            user.change_time(booking.time_slot)
+        booking.group.update_availability()
+        db.session.delete(booking)
+        db.session.commit()
+        flash("You have successfully removed a booking!", "success")
+
+    return redirect(url_for('my_group'))
+
 # Error handlers
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 
