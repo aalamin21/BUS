@@ -2,6 +2,7 @@ import numpy as np
 from .models import User, Group
 from .availability_utils import slot_overlap
 from .module_utils import module_list
+from .models import db
 
 # Configuration constants for scoring weights
 NUM_SLOTS = 70
@@ -30,7 +31,7 @@ def compute_match_score(mod_sim, avail_sim, overlap_sim=1):
        Weights are configured by MODULE_WEIGHT, AVAILABILITY_WEIGHT, and OVERLAP_WEIGHT."""
     return MODULE_WEIGHT * mod_sim + AVAILABILITY_WEIGHT * avail_sim + OVERLAP_WEIGHT * overlap_sim
 
-def suggest_groups_for_user(current_user, group_size=4, top_n=3):
+def suggest_groups_for_user(current_user, group_size=4, top_n=3, session=None):
     """Main group suggestion algorithm. Returns two types of suggestions:
         1. Existing groups the user could join
         2. New group formed with compatible users
@@ -39,11 +40,14 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
         - Scores existing groups based on average member compatibility
         - Generates new group suggestions from ungrouped users
         - Returns formatted suggestions for template rendering"""
+    if session is None:
+        session = db.session
+
     user_vec = np.array(current_user.availability)
     user_modules = get_user_modules(current_user)
 
     # Part 1: Score existing groups
-    existing_groups = Group.query.all()
+    existing_groups = session.query(Group).all()
     scored_groups = []
 
     for group in existing_groups:
@@ -73,7 +77,7 @@ def suggest_groups_for_user(current_user, group_size=4, top_n=3):
     # --------------------------
     # SUGGEST NEW GROUP
     # --------------------------
-    all_users = User.query.filter(User.id != current_user.id, User.group_id == None).all()
+    all_users = session.query(User).filter(User.id != current_user.id, User.group_id == None).all()
     scored_users = []
 
     # Score individual user compatibility
