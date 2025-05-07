@@ -167,4 +167,5 @@ def get_all_suggestions(current_user):
     new_group_suggestions = suggest_groups_for_user(current_user)
     return existing_group_suggestions + new_group_suggestions
 
+"""Hardcoded list of study group rooms to be used in suggest_meeting_time.html and view handler."""
 rooms = ['Group Study Room A', 'Group Study Room B', 'Group Study Room C', 'Group Study Room D', 'Group Study Room E']
