@@ -81,7 +81,7 @@ class Group(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     users: so.Mapped[list['User']] = relationship('User', back_populates='group')
     group_av: so.Mapped[list[int]] = so.mapped_column(IntegerList, default=default_av(False))
-    bookings: so.Mapped[list['Booking']] = relationship('Booking', back_populates='group', cascade='all, delete-orphan', single_parent=True)
+    bookings: so.Mapped[list['Booking']] = relationship('Booking', back_populates='group', cascade='all, delete-orphan')
 
     def update_availability(self):
         try:
@@ -99,6 +99,8 @@ class Group(db.Model):
         self.users.remove(user)
         user.group_id = None
         self.update_availability()
+        if not self.users:
+            db.session.delete(self)
     def __repr__(self):
         return f'Group(id={self.id}), Members: {self.members}'
 
