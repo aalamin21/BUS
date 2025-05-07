@@ -49,7 +49,7 @@ class User(UserMixin, db.Model):
     module1: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module2: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
     module3: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=-1)
-    group: so.Mapped['Group'] = relationship('Group', back_populates='users', cascade='all, delete-orphan', single_parent=True)
+    group: so.Mapped['Group'] = relationship('Group', back_populates='users')
     group_id: so.Mapped[int] = so.mapped_column(ForeignKey('groups.id'), nullable=True)
 
 

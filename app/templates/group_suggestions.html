@@ -27,16 +27,18 @@
                         {{ group.group_members | join(', ') }}
                     </p>
 
-                    <!-- Shared Time Slots Visualization -->
                     <p class="card-text"><strong>Shared Time Slots:</strong>
                         {% if group.shared_slots %}
                             {% for slot in group.shared_slots %}
-                                {{ slot_to_human(slot) }}{% if not loop.last %}, {% endif %}
+                                {% if slot %}
+                                    {{ slot_to_human(loop.index0) }}{% if not loop.last %}, {% endif %}
+                                {% endif %}
                             {% endfor %}
                         {% else %}
                             <span class="text-muted">No shared time slots</span>
                         {% endif %}
                     </p>
+
 
                     <!-- Match Score Progress Bar -->
                     <div class="d-flex align-items-center">
