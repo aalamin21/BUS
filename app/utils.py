@@ -34,14 +34,23 @@ def compute_match_score(mod_sim, avail_sim, overlap_sim=1):
     return MODULE_WEIGHT * mod_sim + AVAILABILITY_WEIGHT * avail_sim + OVERLAP_WEIGHT * overlap_sim
 
 def suggest_groups_for_user(current_user, group_size=4, top_n=3, session=None):
-    """Main group suggestion algorithm. Returns two types of suggestions:
-        1. Existing groups the user could join
-        2. New group formed with compatible users
+    """
+    Main group suggestion algorithm. Returns two types of suggestions:
+    1. Existing groups the user could join
+    2. A new group formed with compatible users
 
-        Process:
-        - Scores existing groups based on average member compatibility
-        - Generates new group suggestions from ungrouped users
-        - Returns formatted suggestions for template rendering"""
+    This function runs in two stages:
+
+    - Stage 1: Scores all existing groups by averaging compatibility scores between the current user
+      and each group member. Compatibility is based on shared modules, availability, and time-slot overlap.
+
+    - Stage 2: Builds a new group by selecting the most compatible ungrouped users. It scores each candidate
+      against the current user, and if enough compatible users exist, it forms a new group.
+
+    The output is two sets of results:
+    - A list of formatted existing groups the user may join (ranked by score)
+    - Suggested new group if enough compatible users are found
+    """
     if session is None:
         session = db.session
 
@@ -132,6 +141,12 @@ def format_group(users, score=None, group=None):
 
 
 def score_user_to_group(user, group):
+    """Calculates a compatibility score between a single user and an existing group.
+        The score is based on:
+        - Jaccard similarity between the user's selected modules and the group's combined modules.
+        - Jaccard similarity between the user's availability and the group's average availability.
+        - A binary indicator of whether any shared time slots exist (overlap).
+        This function returns a weighted match score used to recommend group membership."""
     user_modules = get_user_modules(user)
     user_avail = np.array(user.availability)
 
@@ -152,6 +167,15 @@ def score_user_to_group(user, group):
     return compute_match_score(mod_sim, avail_sim, overlap_sim)
 
 def find_existing_group_matches(current_user, all_groups, top_n=3):
+    """
+    Finds and returns the top N existing study groups that best match the current user.
+
+    Each group is scored using `score_user_to_group()` based on shared modules,
+    availability, and overlapping time slots. The current user is excluded from
+    any groups they are already part of.
+
+    Returns a list of formatted group dictionaries, sorted by match score in descending order.
+    """
     scored = []
     for g in all_groups:
         if current_user.id in [u.id for u in g.users]:
@@ -166,6 +190,15 @@ def find_existing_group_matches(current_user, all_groups, top_n=3):
     return formatted
 
 def get_all_suggestions(current_user):
+    """
+    Aggregates all group suggestions for the current user.
+
+    This function fetches all study groups from the database and returns a combined list of:
+    - Existing groups the user is compatible with (via `find_existing_group_matches`)
+    - A newly suggested group based on top compatibility (via `suggest_groups_for_user`)
+
+    Returns a merged list of formatted group suggestion.
+    """
     all_groups = Group.query.all()
     existing_group_suggestions = find_existing_group_matches(current_user, all_groups)
     new_group_suggestions = suggest_groups_for_user(current_user)

@@ -166,6 +166,14 @@ def suggested_groups():
 @app.route('/join_group', methods=['POST'])
 @login_required
 def join_group():
+    """
+    Handles user requests to join a study group.
+
+    If a `group_id` is provided in the POST request, the current user is added to that existing group.
+    If no `group_id` is provided, a new group is created and the current user is added to it.
+
+    A success message is flashed, and the user is redirected to the 'my_group' page.
+    """
     group_id = request.form.get("group_id")
 
     if group_id:
@@ -190,6 +198,12 @@ def join_group():
 @app.route("/leave_group", methods=["POST"])
 @login_required
 def leave_group():
+    """
+     Handles a POST request to remove the current user from their study group.
+     This function updates the database to remove the user from the group,
+     commits the change, and redirects the user back to the suggested groups page
+     with a success message.
+     """
     current_user.group.remove_user(current_user)
     db.session.commit()
     flash("You have left the group.", "success")
@@ -199,6 +213,13 @@ def leave_group():
 @app.route("/my_group")
 @login_required
 def my_group():
+    """
+    Renders the 'My Group' page for the current user.
+
+    If the user is not part of any group, they are redirected to the suggested groups page.
+    Otherwise, it gathers the group’s shared availability and common modules,
+    and displays them using the 'my_group.html' template.
+    """
     form = ChooseForm()
     if not current_user.group_id:
         flash("You are not part of any study group yet.", "danger")

@@ -54,11 +54,18 @@ def av_vec_to_dict(av):
     return av_dict
 
 def slot_overlap(slots1, slots2):
+    """
+     Determines whether two availability vectors share at least two common available time slots.
+    Returns True if the number of overlapping '1' values is two or more, indicating viable scheduling.
+    """
     return sum(a and b for a, b in zip(slots1, slots2)) >= 2
 
 def slot_to_human(slot_index):
+    """
+    Converts a numerical time slot index into a human-readable day and time string.
+    """
     day_index = slot_index // len(time_slots)
     time_index = slot_index % len(time_slots)
     day_name = days[day_index][1]
     time_name = time_slots[time_index][1]
-    return f"{day_name} {time_name}"
+    return f"{day_name} {time_name}"a
