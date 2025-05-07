@@ -102,7 +102,7 @@ def test_jaccard_similarity_negative():
 # Feature 2: Group Suggestion Algorithm
 @pytest.mark.asyncio
 async def test_suggest_groups_for_user_positive(test_client, sample_users, sample_groups):
-    #Test case where a suitable existing group is suggested.
+    #This is a test case where a suitable existing group is suggested.
     with app.app_context():
         current_user = db.session.get(User, sample_users[3].id)  # Reattach to session
         suggested_groups, _ = suggest_groups_for_user(current_user, group_size=4, top_n=2, session=db.session)
@@ -111,7 +111,7 @@ async def test_suggest_groups_for_user_positive(test_client, sample_users, sampl
 
 
 def test_suggest_groups_for_user_negative(init_database):
-    """Test case where no suitable existing groups exist."""
+    """This is a test case where no suitable existing groups exist."""
     with app.app_context():
         # Create a lonely user with no available groups
         timestamp = str(time.time())
@@ -130,7 +130,7 @@ def test_suggest_groups_for_user_negative(init_database):
 
 # Feature 3: Match Score Calculation
 def test_compute_match_score_positive():
-    #Test case with non-zero similarity and overlap."""
+    #Test case with non-zero similarity and overlap.
     mod_sim = 0.8
     avail_sim = 0.6
     overlap = 1
@@ -139,28 +139,29 @@ def test_compute_match_score_positive():
 
 
 def test_compute_match_score_negative():
-    #Test case with zero similarity and overlap."""
+    #Test case with zero similarity and overlap.
     assert abs(compute_match_score(0.0, 0.0, 0.0) - 0.0) < 1e-6
 
 
 # Easiest Positive Test Case for Registration Form (Using form_test_context)
 def test_registration_form_positive(form_test_context):
-    """Test registration form with minimal but valid data using form_test_context."""
+    #Test registration form with minimal but valid data using form_test_context.
     form_data = {
         'first_name': 'Valid',
         'last_name': 'User',
-        'email': 'valid.user@university.edu', # Must be a valid email format
-        'faculty': 'Life Sciences', # Must be one of the choices
-        'course_name': 'Medicine and Surgery MBChB', # Must be one of the choices
-        'year_of_study': 'First Year', # Must be one of the choices
-        'password': 'password123', # Just needs to be non-empty for DataRequired
-        'confirm_password': 'password123' # Just needs to be non-empty for DataRequired
+        'email': 'valid.user@university.edu',   # Must be a valid email format
+        'faculty': 'Life Sciences',   # Must be one of the choices
+        'course_name': 'Medicine and Surgery MBChB',   # Must be one of the choices
+        'year_of_study': 'First Year',   # Must be one of the choices
+        'password': 'password123',   # Just needs to be non-empty for DataRequired
+        'confirm_password': 'password123'   # Just needs to be non-empty for DataRequired
     }
     form = RegistrationForm(data=form_data)
 
     # Check if the form validates successfully
     assert form.validate(), f"Form should be valid with valid data, but got errors: {form.errors}"
     assert form.errors == {} # Ensure no validation errors were recorded
+
 
 # Easiest Negative Test Case for Registration Form (Using form_test_context)
 def test_registration_form_negative(form_test_context):
@@ -183,3 +184,4 @@ def test_registration_form_negative(form_test_context):
     assert 'year_of_study' in form.errors
     assert 'password' in form.errors
     assert 'confirm_password' in form.errors
+    #This should pass if the errors are picked up by the form
