@@ -69,7 +69,7 @@ Once in a group, users:
 | Student Name     | ID Number | Contribution (%) | Key Contributions / Tasks Completed                                                                                                       | Signature |
 |------------------|-----------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-----------|
 | Rajan Dosanjh    | 2735127   | 20%              | Profile creation (first registration page), full HTML page design, student DB creation, room booking functionality, video editing, README | RD        |
-| Kelby Matthew    | 2884840   | 20%              | Grouping algorithm, HTML for suggested/joined group pages, leaving group functionality                                                    | KM        |
+| Kelby Matthew    | 2884840   | 20%              | Group suggestion algorithm, HTML visual formatting of group pages, group interaction view handler                                           | KM        |
 | Alfred Mureithi  | 2185431   | 20%              | Test cases for features, HTML and page creation for 'Suggest Meeting Time' page                                                           | AM        |
 | Irfan Hassan     | 2066182   | 20%              | Group suggestion algorithm, HTML for suggested/joined group pages                                                                         | IH        |
 | Ahmed Alamin     | 2005390   | 20%              | Availability editing page (HTML/backend), booking add/delete functionality, database class models, general debugging                      | AA        |
