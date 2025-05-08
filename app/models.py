@@ -60,6 +60,9 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def change_time(self, time_slot):
+        """
+        A function to toggle the user's availability at a given time slot.
+        """
         av = list(self.availability)
         av[time_slot] = 0 if av[time_slot] else 1
         self.availability = av
@@ -84,18 +87,28 @@ class Group(db.Model):
     bookings: so.Mapped[list['Booking']] = relationship('Booking', back_populates='group', cascade='all, delete-orphan')
 
     def update_availability(self):
+        """
+        A function that updates the availability list for this group. If the group is empty it stores a zero availability
+        list.
+        """
         try:
             self.group_av = group_availability(*(user.availability for user in self.users if user.availability))
         except IndexError:
             self.group_av = default_av(False)
 
     def add_user(self, user: User):
+        """
+        A function to add a user to the group as well as update the group availability list.
+        """
         self.users.append(user)
         # Combine availability using logical AND
         self.group_av = self.group_av if self.group_av else default_av(True)
         self.update_availability()
 
     def remove_user(self, user: User):
+        """
+        A function to remove a user from the group as well as update the group availability list.
+        """
         self.users.remove(user)
         user.group_id = None
         self.update_availability()

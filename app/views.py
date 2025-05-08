@@ -236,13 +236,16 @@ def my_group():
 @app.route("/suggest_meeting_time", methods=["GET","POST"])
 @login_required
 def suggest_meeting_time():
-    form = ChooseForm()
+    """
+    Renders the 'Suggested Meeting Time' page for the current user using the group's available slots.
+
+    If the current user is not part of any group, they are redirected to the suggested groups page.
+    """
+
+    form = ChooseForm() # Used for the time slot selection which is then redirected to the add_booking endpoint
     if not current_user.group_id:
         flash("You need to be in a group to suggest a meeting time", "danger")
         return redirect(url_for('suggested_groups'))
-    # if current_user.group.bookings:
-    #     flash("A booking has already been made for your group.", "danger")
-    #     return redirect(url_for("my_group"))
 
     return render_template("suggest_meeting_time.html", title="Suggest Meeting Time", rooms=rooms
                            , form=form)
@@ -250,6 +253,15 @@ def suggest_meeting_time():
 @app.route('/add_booking', methods=['POST'])
 @login_required
 def add_booking():
+    """
+    Creates a new booking for the current user's group linking the booking database object to the group.
+
+    The data in the form object includes the time_slot and the room selected.
+    The user is redirected to the group page where the booking is shown.
+
+    The function also updates the availability of each of the users in the group as well as the group's availability.
+    """
+
     form = ChooseForm()
     if form.validate_on_submit():
         group = current_user.group
@@ -270,6 +282,16 @@ def add_booking():
 
 @app.route('/remove_booking', methods=['POST'])
 def remove_booking():
+    """
+    Removes the selected booking from the database.
+
+    Includes error handling for the following cases:
+    - User is not in the group associated with the booking.
+    - The current group has no bookings.
+    - The booking is already removed or doesn't exist.
+
+    The function also updates the availability of each of the users in the group as well as the group's availability.
+    """
     form = ChooseForm()
     if not current_user.group_id:
         flash("You need to be in a group to remove a booking", "danger")

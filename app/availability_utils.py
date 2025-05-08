@@ -22,6 +22,9 @@ days = [
 ]
 
 def default_av(bool):
+    """
+    A function that creates the availability list template with a given availability boolean value.
+    """
     return [1 if bool else 0] * len(days) * len(time_slots)
 
 def flatten_availability(availability):
@@ -36,11 +39,17 @@ def flatten_availability(availability):
     return vector
 
 def group_availability(*avs):
+    """
+    A function that computes shared availability between a list of availability vectors.
+    """
     avs = list(map(list, avs))
     length = len(avs[0])
     return [int(all(av[i] for av in avs)) for i in range(length)]
 
 def av_vec_to_dict(av):
+    """
+    A function that converts an availability vector to a JSON style dictionary used for the UI templates.
+    """
     if len(av) != len(days)*len(time_slots):
         raise ValueError('Invalid availability vector')
     idx = 0
